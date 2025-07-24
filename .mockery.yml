@@ -1,0 +1,9 @@
+dir: "{{.InterfaceDir}}/mocks"
+structname: "{{.InterfaceName | firstUpper}}"
+pkgname: "mocks"
+filename: "mock_{{.InterfaceName | snakecase}}.go"
+all: true
+packages:
+  github.com/AliUnipal/chat:
+    config:
+      recursive: true
