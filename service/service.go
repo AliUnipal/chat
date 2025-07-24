@@ -9,6 +9,13 @@ import (
 	"github.com/google/uuid"
 )
 
+// TODO:
+// 1. Delete and recreate and complete ChatService interface
+// 2. a) Implement the methods in the service struct
+// 2. b) Update the ChatRepository interface to provide the necessary methods
+// 2. c) Generate mocks for the updated interfaces
+// 3. Write unit tests for the service methods
+
 type ChatService interface {
 	CreateChat(ctx context.Context, participantID uuid.UUID) (uuid.UUID, error)
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]model.Message, error)
