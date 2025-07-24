@@ -27,3 +27,6 @@ jobs:
 
       - name: Test
         run: go test -v -race ./...
+
+      - name: Format
+        run: go fmt ./...
