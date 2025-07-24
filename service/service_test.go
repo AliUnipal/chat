@@ -85,7 +85,7 @@ func TestGetMessages_AdminGetsMessages(t *testing.T) {
 	}
 
 	if len(messages) != len(expectedMessages) {
-								t.Fatalf("expected %d messages, got %d", len(expectedMessages), len(messages))
+		t.Fatalf("expected %d messages, got %d", len(expectedMessages), len(messages))
 	}
 
 	for i, msg := range messages {
