@@ -14,12 +14,12 @@ type User struct {
 }
 
 type Chat struct {
-	ID       uuid.UUID
-	Type     ChatType
-	Admin    uuid.UUID
-	Name     string
-	ImageURL string
-	Members  []uuid.UUID
+	ID           uuid.UUID
+	Type         ChatType
+	Admin        uuid.UUID
+	Name         string
+	ImageURL     string
+	Participants []uuid.UUID
 }
 
 type ChatType string
@@ -42,4 +42,5 @@ type ContentType int
 const (
 	TextContentType ContentType = iota
 	ImageContentType
+	FileContentType
 )
