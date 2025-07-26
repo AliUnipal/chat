@@ -15,17 +15,12 @@ import (
 
 type ChatService interface {
 	CreateChat(ctx context.Context, participantID *uuid.UUID, chatType model.ChatType) (model.Chat, error)
-	DeleteChat(ctx context.Context, chatID uuid.UUID) error
-	EditChat(ctx context.Context, chatID uuid.UUID, body model.Chat) (model.Chat, error)
-	InviteParticipant(ctx context.Context, chatID uuid.UUID, participantID uuid.UUID) (model.User, error)
-	RemoveParticipant(ctx context.Context, chatID uuid.UUID, participantID uuid.UUID) (uuid.UUID, error)
+	DeleteChat(ctx context.Context, chatID uuid.UUID) (bool, error)
+	EditChatName(ctx context.Context, chatID uuid.UUID, name string) (bool, error)
+	EditChatImage(ctx context.Context, chatID uuid.UUID, imageURL string) (bool, error)
+	InviteChatParticipant(ctx context.Context, chatID uuid.UUID, participantID uuid.UUID) (model.User, error)
+	RemoveChatParticipant(ctx context.Context, chatID uuid.UUID, participantID uuid.UUID) (uuid.UUID, error)
 	TransferAdminRole(ctx context.Context, chatID uuid.UUID, participantID uuid.UUID) (model.Chat, error) // is TransferOwnership better?
-	ClearMessagesHistory(ctx context.Context, chatID uuid.UUID) error
-
-	SendTextMessage(ctx context.Context, chatID uuid.UUID, content string) (model.Message, error)
-	SendFileMessage(ctx context.Context, chatID uuid.UUID, content []byte) (model.Message, error)
-	SendImageMessage(ctx context.Context, chatID uuid.UUID, content []byte) (model.Message, error)
-	GetMessages(ctx context.Context, chatID uuid.UUID) ([]model.Message, error)
 }
 
 type ChatRepository interface {
