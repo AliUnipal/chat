@@ -13,21 +13,13 @@ type User struct {
 	PhoneNumber string
 }
 
-type Chat struct {
+type DirectChat struct {
 	ID           uuid.UUID
-	Type         ChatType
 	Admin        uuid.UUID
 	Name         string
 	ImageURL     string
-	Participants []uuid.UUID
+	Participants []User
 }
-
-type ChatType string
-
-const (
-	DirectChatType ChatType = "direct"
-	GroupChatType  ChatType = "group"
-)
 
 type Message struct {
 	ID          uuid.UUID
