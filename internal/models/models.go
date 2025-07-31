@@ -1,9 +1,11 @@
 // Package model provides the data structures for the chat application.
-package model
+package models
 
 import (
 	"github.com/google/uuid"
 )
+
+// TODO: Separate each model into its respective folder.
 
 type User struct {
 	ID          uuid.UUID
@@ -14,11 +16,11 @@ type User struct {
 }
 
 type DirectChat struct {
-	ID           uuid.UUID
-	Admin        uuid.UUID
-	Name         string
-	ImageURL     string
-	Participants []User
+	ID          uuid.UUID
+	Admin       uuid.UUID
+	Name        string
+	ImageURL    string
+	Participant User
 }
 
 type Message struct {
