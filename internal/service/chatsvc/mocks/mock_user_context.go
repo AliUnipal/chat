@@ -63,14 +63,20 @@ type UserContext_GetCurrentUserID_Call struct {
 }
 
 // GetCurrentUserID is a helper method to define mock.On call
-//   - context1
+//   - context1 context.Context
 func (_e *UserContext_Expecter) GetCurrentUserID(context1 interface{}) *UserContext_GetCurrentUserID_Call {
 	return &UserContext_GetCurrentUserID_Call{Call: _e.mock.On("GetCurrentUserID", context1)}
 }
 
 func (_c *UserContext_GetCurrentUserID_Call) Run(run func(context1 context.Context)) *UserContext_GetCurrentUserID_Call {
 	_c.Call.Run(func(args mock.Arguments) {
-		run(args[0].(context.Context))
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		run(
+			arg0,
+		)
 	})
 	return _c
 }
