@@ -2,10 +2,19 @@ package chatsvc
 
 import (
 	"context"
-	"fmt"
-	"github.com/AliUnipal/chat/internal/models"
+	"errors"
+	"github.com/AliUnipal/chat/internal/models/chat"
+	"github.com/AliUnipal/chat/internal/models/message"
+	"github.com/AliUnipal/chat/internal/models/user"
+	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
 	"github.com/google/uuid"
 )
+
+// NOTE: Something that gives the pointer of the chat to add messages <- Repo, Dependency of chat repo.
+// Dependency for msgsvc
+// type chatRepository interface {
+//	 GetChatByUser(ctx context.Context, userID uuid.UUID, userTwo uuid) (*repo.Chat, error)
+// }
 
 // TODO:
 // 1. Delete and recreate and complete ChatService interface - Done
@@ -14,59 +23,79 @@ import (
 // 2. c) Generate mocks for the updated interfaces
 // 3. Write unit tests for the service methods
 
-type ChatService interface {
-	CreateDirectChat(ctx context.Context, ownerId uuid.UUID, participantId uuid.UUID) (uuid.UUID, error)
-	// NOTE: This function in the future will either return all chat types "Group" and "Direct"
-	// or they have to be seperate
-	GetDirectChats(ctx context.Context, userId uuid.UUID) ([]models.DirectChat, error)
+type chatService interface {
+	CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error
+	GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error)
 }
 
-type ChatRepository interface {
-	CreateDirectChat(ctx context.Context, chat models.DirectChat) (uuid.UUID, error)
-	GetChatsByUserId(ctx context.Context, userId uuid.UUID) ([]models.DirectChat, error)
-	// Ask about this if it should be in a different repo (User Repo) or a service.
-	GetUserById(ctx context.Context, userId uuid.UUID) (models.User, error)
+type chatRepository interface {
+	CreateChat(ctx context.Context, chat repo.CreateChatInput) error
+	GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*repo.Chat, error)
 }
 
-type UserContext interface {
-	GetCurrentUserID(context context.Context) uuid.UUID // Ask if this should return error too?
+var _ chatService = (*service)(nil)
+
+func NewService(repo chatRepository) *service {
+	return &service{repo}
 }
 
 type service struct {
-	repo ChatRepository
-	uc   UserContext
+	repo chatRepository
 }
 
-func NewService(repo ChatRepository, uc UserContext) *service {
-	return &service{repo, uc}
+func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error {
+	if currentUserID == uuid.Nil {
+		return errors.New("current user ID is missing")
+	}
+	if otherUserID == uuid.Nil {
+		return errors.New("other user ID is missing")
+	}
+
+	if err := s.repo.CreateChat(ctx, repo.CreateChatInput{
+		UserOneID: currentUserID,
+		UserTwoID: otherUserID,
+	}); err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (s *service) CreateDirectChat(ctx context.Context, ownerId uuid.UUID, participantId uuid.UUID) (uuid.UUID, error) {
-	userId := s.uc.GetCurrentUserID(ctx)
-	participant, err := s.repo.GetUserById(ctx, userId)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	chat := models.DirectChat{
-		ID:          uuid.New(),
-		Name:        fmt.Sprintf("New chat with %s %s", participant.FirstName, participant.LastName),
-		Admin:       userId,
-		ImageURL:    "",
-		Participant: participant,
-	}
-	chatID, err := s.repo.CreateDirectChat(ctx, chat)
-	if err != nil {
-		return uuid.Nil, err
-	}
-
-	return chatID, nil
-}
-
-func (s *service) GetDirectChats(ctx context.Context, userId uuid.UUID) ([]models.DirectChat, error) {
-	chats, err := s.repo.GetChatsByUserId(ctx, userId)
+func (s *service) GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error) {
+	c, err := s.repo.GetChatsByUser(ctx, userID)
 	if err != nil {
 		return nil, err
+	}
+	chats := make([]chat.Chat, len(c))
+	for i, c := range c {
+		messages := make([]message.Message, len(c.Messages))
+		for j, m := range c.Messages {
+			messages[j] = message.Message{
+				ID:          m.ID,
+				SenderID:    m.SenderID,
+				Content:     m.Content,
+				ContentType: message.TextContentType,
+				Timestamp:   m.Timestamp,
+			}
+		}
+
+		chats[i] = chat.Chat{
+			CurrentUser: user.User{
+				ID:        c.CurrentUser.ID,
+				ImageURL:  c.CurrentUser.ImageURL,
+				FirstName: c.CurrentUser.FirstName,
+				LastName:  c.CurrentUser.LastName,
+				Username:  c.CurrentUser.Username,
+			},
+			OtherUser: user.User{
+				ID:        c.OtherUser.ID,
+				ImageURL:  c.OtherUser.ImageURL,
+				FirstName: c.OtherUser.FirstName,
+				LastName:  c.OtherUser.LastName,
+				Username:  c.OtherUser.Username,
+			},
+			Messages: messages,
+		}
 	}
 
 	return chats, nil
