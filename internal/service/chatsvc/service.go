@@ -80,6 +80,7 @@ func (s *service) GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, 
 		}
 
 		chats[i] = chat.Chat{
+			ID: c.ID,
 			CurrentUser: user.User{
 				ID:        c.CurrentUser.ID,
 				ImageURL:  c.CurrentUser.ImageURL,
