@@ -6,7 +6,9 @@ import (
 	"github.com/AliUnipal/chat/internal/service/chatsvc"
 	"github.com/AliUnipal/chat/internal/service/chatsvc/mocks"
 	chatRepo "github.com/AliUnipal/chat/internal/service/chatsvc/repo"
+	userRepo "github.com/AliUnipal/chat/internal/service/usersvc/repo"
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
@@ -76,7 +78,7 @@ func TestGetChats_ReturnChats(t *testing.T) {
 	}
 }
 
-func TestGetChats_ReturnErrors(t *testing.T) {
+func TestGetChats_ReturnError(t *testing.T) {
 	ctx := context.Background()
 	userID := uuid.New()
 
@@ -90,73 +92,82 @@ func TestGetChats_ReturnErrors(t *testing.T) {
 	}
 }
 
-// TODO: Fix unit tests.
+func TestCreateChat_ReturnsErrorOnEmptyUserOne(t *testing.T) {
+	ctx := context.Background()
+	currentUserID := uuid.New()
+	otherUserID := uuid.New()
 
-//func TestCreateChat_ReturnsErrorsOnEmptyUserOneID(t *testing.T) {
-//	ctx := context.Background()
-//	currentUserID := uuid.New()
-//	otherUserID := uuid.New()
-//	chatInput := chatRepo.CreateChatInput{
-//		ID: uuid.UUID{},
-//		CurrentUser: chatRepo.User{
-//			ID:        currentUserID,
-//			ImageURL:  "",
-//			FirstName: "Test 1",
-//			LastName:  "",
-//			Username:  "123",
-//		},
-//		OtherUser: chatRepo.User{
-//			ID:        otherUserID,
-//			ImageURL:  "",
-//			FirstName: "Test 2",
-//			LastName:  "",
-//			Username:  "987",
-//		},
-//	}
-//
-//	chatMockRepo := mocks.NewChatRepository(t)
-//	chatMockRepo.EXPECT().CreateChat(mock.Anything, chatInput).Return(errors.New("error"))
-//	userMockRepo := mocks.NewUserRepository(t)
-//	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{}, errors.New("error"))
-//
-//	service := chatsvc.NewService(chatMockRepo, userMockRepo)
-//
-//	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
-//		t.Fatal("expected error, got nil")
-//	}
-//}
+	chatMockRepo := mocks.NewChatRepository(t)
+	userMockRepo := mocks.NewUserRepository(t)
+	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{}, errors.New("not found"))
 
-//func TestCreateChat_ReturnsErrors(t *testing.T) {
-//	ctx := context.Background()
-//	currentUserID := uuid.New()
-//	otherUserID := uuid.New()
-//	chatInput := chatRepo.CreateChatInput{
-//		ID: uuid.UUID{},
-//		CurrentUser: chatRepo.User{
-//			ID:        currentUserID,
-//			ImageURL:  "",
-//			FirstName: "Test 1",
-//			LastName:  "",
-//			Username:  "123",
-//		},
-//		OtherUser: chatRepo.User{
-//			ID:        otherUserID,
-//			ImageURL:  "",
-//			FirstName: "Test 2",
-//			LastName:  "",
-//			Username:  "987",
-//		},
-//	}
-//
-//	chatMockRepo := mocks.NewChatRepository(t)
-//	chatMockRepo.EXPECT().CreateChat(mock.Anything, chatInput).Return(errors.New("error"))
-//	userMockRepo := mocks.NewUserRepository(t)
-//	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{}, nil)
-//	userMockRepo.EXPECT().GetUser(mock.Anything, otherUserID).Return(userRepo.User{}, nil)
-//
-//	service := chatsvc.NewService(chatMockRepo, userMockRepo)
-//
-//	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
-//		t.Fatal("expected error, got nil")
-//	}
-//}
+	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+
+	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestCreateChat_ReturnsErrorOnEmptyUserTwo(t *testing.T) {
+	ctx := context.Background()
+	currentUserID := uuid.New()
+	otherUserID := uuid.New()
+
+	chatMockRepo := mocks.NewChatRepository(t)
+	userMockRepo := mocks.NewUserRepository(t)
+	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{}, nil)
+	userMockRepo.EXPECT().GetUser(mock.Anything, otherUserID).Return(userRepo.User{}, errors.New("not found"))
+
+	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+
+	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestCreateChat_ReturnsError(t *testing.T) {
+	ctx := context.Background()
+	currentUserID := uuid.New()
+	otherUserID := uuid.New()
+	chatInput := chatRepo.CreateChatInput{
+		ID: uuid.UUID{},
+		CurrentUser: chatRepo.User{
+			ID:        currentUserID,
+			ImageURL:  "",
+			FirstName: "Test 1",
+			LastName:  "",
+			Username:  "123",
+		},
+		OtherUser: chatRepo.User{
+			ID:        otherUserID,
+			ImageURL:  "",
+			FirstName: "Test 2",
+			LastName:  "",
+			Username:  "987",
+		},
+	}
+
+	chatMockRepo := mocks.NewChatRepository(t)
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, chatInput).Return(errors.New("error"))
+	userMockRepo := mocks.NewUserRepository(t)
+	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{
+		ID:        currentUserID,
+		ImageURL:  "",
+		FirstName: "Test 1",
+		LastName:  "",
+		Username:  "123",
+	}, nil)
+	userMockRepo.EXPECT().GetUser(mock.Anything, otherUserID).Return(userRepo.User{
+		ID:        otherUserID,
+		ImageURL:  "",
+		FirstName: "Test 2",
+		LastName:  "",
+		Username:  "987",
+	}, nil)
+
+	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+
+	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
