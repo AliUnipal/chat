@@ -2,11 +2,11 @@ package chatsvc
 
 import (
 	"context"
-	"errors"
 	"github.com/AliUnipal/chat/internal/models/chat"
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/models/user"
-	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
+	chatRepo "github.com/AliUnipal/chat/internal/service/chatsvc/repo"
+	userRepo "github.com/AliUnipal/chat/internal/service/usersvc/repo"
 	"github.com/google/uuid"
 )
 
@@ -29,31 +29,50 @@ type chatService interface {
 }
 
 type chatRepository interface {
-	CreateChat(ctx context.Context, chat repo.CreateChatInput) error
-	GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*repo.Chat, error)
+	CreateChat(ctx context.Context, chat chatRepo.CreateChatInput) error
+	GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatRepo.Chat, error)
+}
+
+type userRepository interface {
+	GetUser(ctx context.Context, userID uuid.UUID) (userRepo.User, error)
 }
 
 var _ chatService = (*service)(nil)
 
-func NewService(repo chatRepository) *service {
-	return &service{repo}
+func NewService(chatRepo chatRepository, userRepo userRepository) *service {
+	return &service{chatRepo, userRepo}
 }
 
 type service struct {
-	repo chatRepository
+	chatRepo chatRepository
+	userRepo userRepository
 }
 
 func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error {
-	if currentUserID == uuid.Nil {
-		return errors.New("current user ID is missing")
+	u1, err := s.userRepo.GetUser(ctx, currentUserID)
+	if err != nil {
+		return err
 	}
-	if otherUserID == uuid.Nil {
-		return errors.New("other user ID is missing")
+	u2, err := s.userRepo.GetUser(ctx, otherUserID)
+	if err != nil {
+		return err
 	}
 
-	if err := s.repo.CreateChat(ctx, repo.CreateChatInput{
-		UserOneID: currentUserID,
-		UserTwoID: otherUserID,
+	if err := s.chatRepo.CreateChat(ctx, chatRepo.CreateChatInput{
+		CurrentUser: chatRepo.User{
+			ID:        u1.ID,
+			ImageURL:  u1.ImageURL,
+			FirstName: u1.FirstName,
+			LastName:  u1.LastName,
+			Username:  u1.Username,
+		},
+		OtherUser: chatRepo.User{
+			ID:        u2.ID,
+			ImageURL:  u2.ImageURL,
+			FirstName: u2.FirstName,
+			LastName:  u2.LastName,
+			Username:  u2.Username,
+		},
 	}); err != nil {
 		return err
 	}
@@ -62,12 +81,13 @@ func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uui
 }
 
 func (s *service) GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error) {
-	c, err := s.repo.GetChatsByUser(ctx, userID)
+	c, err := s.chatRepo.GetChatsByUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	chats := make([]chat.Chat, len(c))
 	for i, c := range c {
+		// TODO: Move the messages into its own service.
 		messages := make([]message.Message, len(c.Messages))
 		for j, m := range c.Messages {
 			messages[j] = message.Message{
