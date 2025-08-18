@@ -40,16 +40,16 @@ func (_m *UserRepository) EXPECT() *UserRepository_Expecter {
 }
 
 // CreateUser provides a mock function for the type UserRepository
-func (_mock *UserRepository) CreateUser(ctx context.Context, username string) error {
-	ret := _mock.Called(ctx, username)
+func (_mock *UserRepository) CreateUser(ctx context.Context, in repo.User) error {
+	ret := _mock.Called(ctx, in)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateUser")
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, string) error); ok {
-		r0 = returnFunc(ctx, username)
+	if returnFunc, ok := ret.Get(0).(func(context.Context, repo.User) error); ok {
+		r0 = returnFunc(ctx, in)
 	} else {
 		r0 = ret.Error(0)
 	}
@@ -63,20 +63,20 @@ type UserRepository_CreateUser_Call struct {
 
 // CreateUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - username string
-func (_e *UserRepository_Expecter) CreateUser(ctx interface{}, username interface{}) *UserRepository_CreateUser_Call {
-	return &UserRepository_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, username)}
+//   - in repo.User
+func (_e *UserRepository_Expecter) CreateUser(ctx interface{}, in interface{}) *UserRepository_CreateUser_Call {
+	return &UserRepository_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, in)}
 }
 
-func (_c *UserRepository_CreateUser_Call) Run(run func(ctx context.Context, username string)) *UserRepository_CreateUser_Call {
+func (_c *UserRepository_CreateUser_Call) Run(run func(ctx context.Context, in repo.User)) *UserRepository_CreateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 string
+		var arg1 repo.User
 		if args[1] != nil {
-			arg1 = args[1].(string)
+			arg1 = args[1].(repo.User)
 		}
 		run(
 			arg0,
@@ -91,7 +91,7 @@ func (_c *UserRepository_CreateUser_Call) Return(err error) *UserRepository_Crea
 	return _c
 }
 
-func (_c *UserRepository_CreateUser_Call) RunAndReturn(run func(ctx context.Context, username string) error) *UserRepository_CreateUser_Call {
+func (_c *UserRepository_CreateUser_Call) RunAndReturn(run func(ctx context.Context, in repo.User) error) *UserRepository_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

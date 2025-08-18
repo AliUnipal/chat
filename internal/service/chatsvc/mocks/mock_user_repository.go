@@ -40,8 +40,8 @@ func (_m *UserRepository) EXPECT() *UserRepository_Expecter {
 }
 
 // GetUser provides a mock function for the type UserRepository
-func (_mock *UserRepository) GetUser(ctx context.Context, userID uuid.UUID) (repo.User, error) {
-	ret := _mock.Called(ctx, userID)
+func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (repo.User, error) {
+	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUser")
@@ -50,15 +50,15 @@ func (_mock *UserRepository) GetUser(ctx context.Context, userID uuid.UUID) (rep
 	var r0 repo.User
 	var r1 error
 	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (repo.User, error)); ok {
-		return returnFunc(ctx, userID)
+		return returnFunc(ctx, id)
 	}
 	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) repo.User); ok {
-		r0 = returnFunc(ctx, userID)
+		r0 = returnFunc(ctx, id)
 	} else {
 		r0 = ret.Get(0).(repo.User)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
-		r1 = returnFunc(ctx, userID)
+		r1 = returnFunc(ctx, id)
 	} else {
 		r1 = ret.Error(1)
 	}
@@ -72,12 +72,12 @@ type UserRepository_GetUser_Call struct {
 
 // GetUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - userID uuid.UUID
-func (_e *UserRepository_Expecter) GetUser(ctx interface{}, userID interface{}) *UserRepository_GetUser_Call {
-	return &UserRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, userID)}
+//   - id uuid.UUID
+func (_e *UserRepository_Expecter) GetUser(ctx interface{}, id interface{}) *UserRepository_GetUser_Call {
+	return &UserRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, id)}
 }
 
-func (_c *UserRepository_GetUser_Call) Run(run func(ctx context.Context, userID uuid.UUID)) *UserRepository_GetUser_Call {
+func (_c *UserRepository_GetUser_Call) Run(run func(ctx context.Context, id uuid.UUID)) *UserRepository_GetUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -100,7 +100,7 @@ func (_c *UserRepository_GetUser_Call) Return(user repo.User, err error) *UserRe
 	return _c
 }
 
-func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) (repo.User, error)) *UserRepository_GetUser_Call {
+func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (repo.User, error)) *UserRepository_GetUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -34,7 +34,7 @@ type chatRepository interface {
 }
 
 type userRepository interface {
-	GetUser(ctx context.Context, userID uuid.UUID) (userRepo.User, error)
+	GetUser(ctx context.Context, id uuid.UUID) (userRepo.User, error)
 }
 
 var _ chatService = (*service)(nil)

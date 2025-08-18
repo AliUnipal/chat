@@ -9,12 +9,12 @@ import (
 )
 
 type userService interface {
-	CreateUser(ctx context.Context, username string) error
+	CreateUser(ctx context.Context, in user.User) (uuid.UUID, error)
 	GetUser(ctx context.Context, id uuid.UUID) (user.User, error)
 }
 
 type userRepository interface {
-	CreateUser(ctx context.Context, username string) error
+	CreateUser(ctx context.Context, in repo.User) error
 	GetUser(ctx context.Context, id uuid.UUID) (repo.User, error)
 }
 
@@ -28,16 +28,26 @@ func NewService(repo userRepository) *service {
 
 var _ userService = (*service)(nil)
 
-func (s *service) CreateUser(ctx context.Context, username string) error {
-	if username == "" {
-		return errors.New("username must not be empty")
+func (s *service) CreateUser(ctx context.Context, in user.User) (uuid.UUID, error) {
+	if in.FirstName == "" {
+		return uuid.Nil, errors.New("first name is required")
+	}
+	if in.Username == "" {
+		return uuid.Nil, errors.New("username is required")
 	}
 
-	if err := s.repo.CreateUser(ctx, username); err != nil {
-		return err
+	userID := uuid.New()
+	if err := s.repo.CreateUser(ctx, repo.User{
+		ID:        userID,
+		ImageURL:  in.ImageURL,
+		FirstName: in.FirstName,
+		LastName:  in.LastName,
+		Username:  in.Username,
+	}); err != nil {
+		return uuid.Nil, err
 	}
 
-	return nil
+	return userID, nil
 }
 
 func (s *service) GetUser(ctx context.Context, id uuid.UUID) (user.User, error) {
