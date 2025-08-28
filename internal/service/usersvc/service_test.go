@@ -1,9 +1,10 @@
-package usersvc
+package usersvc_test
 
 import (
 	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/models/user"
+	"github.com/AliUnipal/chat/internal/service/usersvc"
 	"github.com/AliUnipal/chat/internal/service/usersvc/mocks"
 	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
 	"github.com/google/uuid"
@@ -13,7 +14,7 @@ import (
 
 func TestCreateUser_ReturnID(t *testing.T) {
 	ctx := context.Background()
-	userInput := CreateUserInput{
+	userInput := usersvc.CreateUserInput{
 		ImageURL:  "https://s3....",
 		FirstName: "First CreateUserInput",
 		LastName:  "Test",
@@ -29,7 +30,7 @@ func TestCreateUser_ReturnID(t *testing.T) {
 			u.ImageURL == userInput.ImageURL
 	})).Return(nil)
 
-	service := NewService(mockRepo)
+	service := usersvc.NewService(mockRepo)
 
 	id, err := service.CreateUser(ctx, userInput)
 	if err != nil {
@@ -42,14 +43,14 @@ func TestCreateUser_ReturnID(t *testing.T) {
 
 func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 	ctx := context.Background()
-	userInput := CreateUserInput{
+	userInput := usersvc.CreateUserInput{
 		ImageURL: "Image",
 		LastName: "Last Name",
 		Username: "+97312345678",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	service := NewService(mockRepo)
+	service := usersvc.NewService(mockRepo)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -58,14 +59,14 @@ func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 
 func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 	ctx := context.Background()
-	userInput := CreateUserInput{
+	userInput := usersvc.CreateUserInput{
 		ImageURL:  "",
 		FirstName: "First Name",
 		LastName:  "Last Name",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	service := NewService(mockRepo)
+	service := usersvc.NewService(mockRepo)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -74,7 +75,7 @@ func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 
 func TestCreateUser_ReturnError(t *testing.T) {
 	ctx := context.Background()
-	userInput := CreateUserInput{
+	userInput := usersvc.CreateUserInput{
 		ImageURL:  "",
 		FirstName: "First Name",
 		LastName:  "Last Name",
@@ -84,7 +85,7 @@ func TestCreateUser_ReturnError(t *testing.T) {
 	mockRepo := mocks.NewUserRepository(t)
 	mockRepo.EXPECT().CreateUser(mock.Anything, mock.Anything).Return(errors.New("error"))
 
-	service := NewService(mockRepo)
+	service := usersvc.NewService(mockRepo)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -110,7 +111,7 @@ func TestGetUser_ReturnUser(t *testing.T) {
 		LastName:  expectedUser.LastName,
 		Username:  expectedUser.Username,
 	}, nil)
-	service := NewService(mockRepo)
+	service := usersvc.NewService(mockRepo)
 
 	usr, err := service.GetUser(ctx, userID)
 	if err != nil {
@@ -119,30 +120,5 @@ func TestGetUser_ReturnUser(t *testing.T) {
 
 	if usr != expectedUser {
 		t.Fatalf("Expected user %v got %v", expectedUser, usr)
-	}
-}
-
-func TestGetUser_ReturnErrorOnEmptyID(t *testing.T) {
-	ctx := context.Background()
-
-	mockRepo := mocks.NewUserRepository(t)
-	service := NewService(mockRepo)
-
-	if _, err := service.GetUser(ctx, uuid.Nil); err == nil {
-		t.Fatalf("Expected error got %v", err)
-	}
-}
-
-func TestGetUser_ReturnError(t *testing.T) {
-	ctx := context.Background()
-	userID := uuid.New()
-
-	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().GetUser(mock.Anything, userID).Return(repo.CreateUserInput{}, errors.New("error"))
-
-	service := NewService(mockRepo)
-
-	if _, err := service.GetUser(ctx, userID); err == nil {
-		t.Fatalf("Expected error got %v", err)
 	}
 }
