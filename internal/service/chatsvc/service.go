@@ -23,7 +23,7 @@ import (
 // 3. Write unit tests for the service methods
 
 type chatService interface {
-	CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error
+	CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) (uuid.UUID, error)
 	GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error)
 }
 
@@ -42,15 +42,17 @@ type service struct {
 	chatRepo chatRepository
 }
 
-func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error {
+func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) (uuid.UUID, error) {
+	id := uuid.New()
 	if err := s.chatRepo.CreateChat(ctx, chatRepo.CreateChatInput{
+		ID:            id,
 		CurrentUserID: currentUserID,
 		OtherUserID:   otherUserID,
 	}); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
-	return nil
+	return id, nil
 }
 
 func (s *service) GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error) {

@@ -58,10 +58,6 @@ func (s *service) CreateUser(ctx context.Context, in CreateUserInput) (uuid.UUID
 }
 
 func (s *service) GetUser(ctx context.Context, id uuid.UUID) (user.User, error) {
-	if id == uuid.Nil {
-		return user.User{}, errors.New("id is empty")
-	}
-
 	u, err := s.repo.GetUser(ctx, id)
 	if err != nil {
 		return user.User{}, err

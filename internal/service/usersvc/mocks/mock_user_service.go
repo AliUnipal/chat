@@ -8,6 +8,7 @@ import (
 	"context"
 
 	"github.com/AliUnipal/chat/internal/models/user"
+	"github.com/AliUnipal/chat/internal/service/usersvc"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,7 +41,7 @@ func (_m *UserService) EXPECT() *UserService_Expecter {
 }
 
 // CreateUser provides a mock function for the type UserService
-func (_mock *UserService) CreateUser(ctx context.Context, in user.User) (uuid.UUID, error) {
+func (_mock *UserService) CreateUser(ctx context.Context, in usersvc.CreateUserInput) (uuid.UUID, error) {
 	ret := _mock.Called(ctx, in)
 
 	if len(ret) == 0 {
@@ -49,17 +50,17 @@ func (_mock *UserService) CreateUser(ctx context.Context, in user.User) (uuid.UU
 
 	var r0 uuid.UUID
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.User) (uuid.UUID, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, usersvc.CreateUserInput) (uuid.UUID, error)); ok {
 		return returnFunc(ctx, in)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, user.User) uuid.UUID); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, usersvc.CreateUserInput) uuid.UUID); ok {
 		r0 = returnFunc(ctx, in)
 	} else {
 		if ret.Get(0) != nil {
 			r0 = ret.Get(0).(uuid.UUID)
 		}
 	}
-	if returnFunc, ok := ret.Get(1).(func(context.Context, user.User) error); ok {
+	if returnFunc, ok := ret.Get(1).(func(context.Context, usersvc.CreateUserInput) error); ok {
 		r1 = returnFunc(ctx, in)
 	} else {
 		r1 = ret.Error(1)
@@ -74,20 +75,20 @@ type UserService_CreateUser_Call struct {
 
 // CreateUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - in user.User
+//   - in usersvc.CreateUserInput
 func (_e *UserService_Expecter) CreateUser(ctx interface{}, in interface{}) *UserService_CreateUser_Call {
 	return &UserService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, in)}
 }
 
-func (_c *UserService_CreateUser_Call) Run(run func(ctx context.Context, in user.User)) *UserService_CreateUser_Call {
+func (_c *UserService_CreateUser_Call) Run(run func(ctx context.Context, in usersvc.CreateUserInput)) *UserService_CreateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 user.User
+		var arg1 usersvc.CreateUserInput
 		if args[1] != nil {
-			arg1 = args[1].(user.User)
+			arg1 = args[1].(usersvc.CreateUserInput)
 		}
 		run(
 			arg0,
@@ -102,7 +103,7 @@ func (_c *UserService_CreateUser_Call) Return(uUID uuid.UUID, err error) *UserSe
 	return _c
 }
 
-func (_c *UserService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, in user.User) (uuid.UUID, error)) *UserService_CreateUser_Call {
+func (_c *UserService_CreateUser_Call) RunAndReturn(run func(ctx context.Context, in usersvc.CreateUserInput) (uuid.UUID, error)) *UserService_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

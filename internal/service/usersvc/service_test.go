@@ -31,9 +31,12 @@ func TestCreateUser_ReturnID(t *testing.T) {
 
 	service := NewService(mockRepo)
 
-	_, err := service.CreateUser(ctx, userInput)
+	id, err := service.CreateUser(ctx, userInput)
 	if err != nil {
 		t.Fatalf("Expected no error got %v", err)
+	}
+	if id == uuid.Nil {
+		t.Fatalf("Expected user id got %v", id)
 	}
 }
 
