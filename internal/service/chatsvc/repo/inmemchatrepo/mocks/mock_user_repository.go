@@ -39,63 +39,6 @@ func (_m *UserRepository) EXPECT() *UserRepository_Expecter {
 	return &UserRepository_Expecter{mock: &_m.Mock}
 }
 
-// CreateUser provides a mock function for the type UserRepository
-func (_mock *UserRepository) CreateUser(ctx context.Context, in repo.CreateUserInput) error {
-	ret := _mock.Called(ctx, in)
-
-	if len(ret) == 0 {
-		panic("no return value specified for CreateUser")
-	}
-
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repo.CreateUserInput) error); ok {
-		r0 = returnFunc(ctx, in)
-	} else {
-		r0 = ret.Error(0)
-	}
-	return r0
-}
-
-// UserRepository_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
-type UserRepository_CreateUser_Call struct {
-	*mock.Call
-}
-
-// CreateUser is a helper method to define mock.On call
-//   - ctx context.Context
-//   - in repo.CreateUserInput
-func (_e *UserRepository_Expecter) CreateUser(ctx interface{}, in interface{}) *UserRepository_CreateUser_Call {
-	return &UserRepository_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, in)}
-}
-
-func (_c *UserRepository_CreateUser_Call) Run(run func(ctx context.Context, in repo.CreateUserInput)) *UserRepository_CreateUser_Call {
-	_c.Call.Run(func(args mock.Arguments) {
-		var arg0 context.Context
-		if args[0] != nil {
-			arg0 = args[0].(context.Context)
-		}
-		var arg1 repo.CreateUserInput
-		if args[1] != nil {
-			arg1 = args[1].(repo.CreateUserInput)
-		}
-		run(
-			arg0,
-			arg1,
-		)
-	})
-	return _c
-}
-
-func (_c *UserRepository_CreateUser_Call) Return(err error) *UserRepository_CreateUser_Call {
-	_c.Call.Return(err)
-	return _c
-}
-
-func (_c *UserRepository_CreateUser_Call) RunAndReturn(run func(ctx context.Context, in repo.CreateUserInput) error) *UserRepository_CreateUser_Call {
-	_c.Call.Return(run)
-	return _c
-}
-
 // GetUser provides a mock function for the type UserRepository
 func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error) {
 	ret := _mock.Called(ctx, id)

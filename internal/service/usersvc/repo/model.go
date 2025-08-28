@@ -2,7 +2,7 @@ package repo
 
 import "github.com/google/uuid"
 
-type User struct {
+type CreateUserInput struct {
 	ID        uuid.UUID
 	ImageURL  string
 	FirstName string

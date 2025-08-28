@@ -13,16 +13,17 @@ import (
 
 func TestCreateUser_ReturnID(t *testing.T) {
 	ctx := context.Background()
-	userInput := user.User{
-		ImageURL:  "",
-		FirstName: "First User",
-		LastName:  "",
+	userInput := CreateUserInput{
+		ImageURL:  "https://s3....",
+		FirstName: "First CreateUserInput",
+		LastName:  "Test",
 		Username:  "+97312345678",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().CreateUser(mock.Anything, mock.MatchedBy(func(u repo.User) bool {
-		return u.FirstName == userInput.FirstName &&
+	mockRepo.EXPECT().CreateUser(mock.Anything, mock.MatchedBy(func(u repo.CreateUserInput) bool {
+		return u.ID != uuid.Nil &&
+			u.FirstName == userInput.FirstName &&
 			u.LastName == userInput.LastName &&
 			u.Username == userInput.Username &&
 			u.ImageURL == userInput.ImageURL
@@ -30,22 +31,16 @@ func TestCreateUser_ReturnID(t *testing.T) {
 
 	service := NewService(mockRepo)
 
-	id, err := service.CreateUser(ctx, userInput)
+	_, err := service.CreateUser(ctx, userInput)
 	if err != nil {
 		t.Fatalf("Expected no error got %v", err)
-	}
-
-	if id == uuid.Nil {
-		t.Fatalf("Expected id %v got %v", userInput.ID, id)
 	}
 }
 
 func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 	ctx := context.Background()
-	userID := uuid.New()
-	userInput := user.User{
-		ID:       userID,
-		ImageURL: "",
+	userInput := CreateUserInput{
+		ImageURL: "Image",
 		LastName: "Last Name",
 		Username: "+97312345678",
 	}
@@ -60,9 +55,7 @@ func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 
 func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 	ctx := context.Background()
-	userID := uuid.New()
-	userInput := user.User{
-		ID:        userID,
+	userInput := CreateUserInput{
 		ImageURL:  "",
 		FirstName: "First Name",
 		LastName:  "Last Name",
@@ -78,9 +71,7 @@ func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 
 func TestCreateUser_ReturnError(t *testing.T) {
 	ctx := context.Background()
-	userID := uuid.New()
-	userInput := user.User{
-		ID:        userID,
+	userInput := CreateUserInput{
 		ImageURL:  "",
 		FirstName: "First Name",
 		LastName:  "Last Name",
@@ -102,14 +93,14 @@ func TestGetUser_ReturnUser(t *testing.T) {
 	userID := uuid.New()
 	expectedUser := user.User{
 		ID:        userID,
-		ImageURL:  "",
+		ImageURL:  "https://test..",
 		FirstName: "First Name",
 		LastName:  "Last Name",
 		Username:  "+97312345678",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().GetUser(ctx, userID).Return(repo.User{
+	mockRepo.EXPECT().GetUser(ctx, userID).Return(repo.CreateUserInput{
 		ID:        expectedUser.ID,
 		ImageURL:  expectedUser.ImageURL,
 		FirstName: expectedUser.FirstName,
@@ -144,7 +135,7 @@ func TestGetUser_ReturnError(t *testing.T) {
 	userID := uuid.New()
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().GetUser(mock.Anything, userID).Return(repo.User{}, errors.New("error"))
+	mockRepo.EXPECT().GetUser(mock.Anything, userID).Return(repo.CreateUserInput{}, errors.New("error"))
 
 	service := NewService(mockRepo)
 

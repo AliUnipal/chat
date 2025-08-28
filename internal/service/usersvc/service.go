@@ -8,14 +8,21 @@ import (
 	"github.com/google/uuid"
 )
 
+type CreateUserInput struct {
+	ImageURL  string
+	FirstName string
+	LastName  string
+	Username  string
+}
+
 type userService interface {
-	CreateUser(ctx context.Context, in user.User) (uuid.UUID, error)
+	CreateUser(ctx context.Context, in CreateUserInput) (uuid.UUID, error)
 	GetUser(ctx context.Context, id uuid.UUID) (user.User, error)
 }
 
 type userRepository interface {
-	CreateUser(ctx context.Context, in repo.User) error
-	GetUser(ctx context.Context, id uuid.UUID) (repo.User, error)
+	CreateUser(ctx context.Context, in repo.CreateUserInput) error
+	GetUser(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error)
 }
 
 type service struct {
@@ -28,7 +35,7 @@ func NewService(repo userRepository) *service {
 
 var _ userService = (*service)(nil)
 
-func (s *service) CreateUser(ctx context.Context, in user.User) (uuid.UUID, error) {
+func (s *service) CreateUser(ctx context.Context, in CreateUserInput) (uuid.UUID, error) {
 	if in.FirstName == "" {
 		return uuid.Nil, errors.New("first name is required")
 	}
@@ -37,7 +44,7 @@ func (s *service) CreateUser(ctx context.Context, in user.User) (uuid.UUID, erro
 	}
 
 	userID := uuid.New()
-	if err := s.repo.CreateUser(ctx, repo.User{
+	if err := s.repo.CreateUser(ctx, repo.CreateUserInput{
 		ID:        userID,
 		ImageURL:  in.ImageURL,
 		FirstName: in.FirstName,
@@ -55,16 +62,16 @@ func (s *service) GetUser(ctx context.Context, id uuid.UUID) (user.User, error) 
 		return user.User{}, errors.New("id is empty")
 	}
 
-	usr, err := s.repo.GetUser(ctx, id)
+	u, err := s.repo.GetUser(ctx, id)
 	if err != nil {
 		return user.User{}, err
 	}
 
 	return user.User{
-		ID:        usr.ID,
-		ImageURL:  usr.ImageURL,
-		FirstName: usr.FirstName,
-		LastName:  usr.LastName,
-		Username:  usr.Username,
+		ID:        u.ID,
+		ImageURL:  u.ImageURL,
+		FirstName: u.FirstName,
+		LastName:  u.LastName,
+		Username:  u.Username,
 	}, nil
 }

@@ -7,8 +7,8 @@ import (
 	"github.com/google/uuid"
 )
 
-func New(users ...repo.User) *repository {
-	v := make(map[uuid.UUID]repo.User)
+func New(users ...repo.CreateUserInput) *repository {
+	v := make(map[uuid.UUID]repo.CreateUserInput)
 	for _, user := range users {
 		v[user.ID] = user
 	}
@@ -17,10 +17,10 @@ func New(users ...repo.User) *repository {
 }
 
 type repository struct {
-	users map[uuid.UUID]repo.User
+	users map[uuid.UUID]repo.CreateUserInput
 }
 
-func (r *repository) CreateUser(_ context.Context, in repo.User) error {
+func (r *repository) CreateUser(_ context.Context, in repo.CreateUserInput) error {
 	if _, ok := r.users[in.ID]; ok {
 		return errors.New("user already exists")
 	}
@@ -38,10 +38,10 @@ func (r *repository) CreateUser(_ context.Context, in repo.User) error {
 	return nil
 }
 
-func (r *repository) GetUser(_ context.Context, id uuid.UUID) (repo.User, error) {
+func (r *repository) GetUser(_ context.Context, id uuid.UUID) (repo.CreateUserInput, error) {
 	user, ok := r.users[id]
 	if !ok {
-		return repo.User{}, errors.New("user does not exist")
+		return repo.CreateUserInput{}, errors.New("user does not exist")
 	}
 
 	return user, nil

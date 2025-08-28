@@ -28,7 +28,5 @@ type Message struct {
 }
 
 type CreateChatInput struct {
-	ID          uuid.UUID
-	CurrentUser User
-	OtherUser   User
+	ID, CurrentUserID, OtherUserID uuid.UUID
 }

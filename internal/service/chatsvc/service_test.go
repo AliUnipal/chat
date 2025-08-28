@@ -59,9 +59,8 @@ func TestGetChats_ReturnChats(t *testing.T) {
 
 	chatMockRepo := mocks.NewChatRepository(t)
 	chatMockRepo.EXPECT().GetChatsByUser(ctx, userID).Return(expectedChats, nil)
-	userMockRepo := mocks.NewUserRepository(t)
 
-	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+	service := chatsvc.NewService(chatMockRepo)
 	chats, err := service.GetChats(ctx, userID)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
@@ -86,7 +85,7 @@ func TestGetChats_ReturnError(t *testing.T) {
 	chatMockRepo.EXPECT().GetChatsByUser(ctx, userID).Return(nil, errors.New("not found"))
 	userMockRepo := mocks.NewUserRepository(t)
 
-	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+	service := chatsvc.NewService(chatMockRepo)
 	if _, err := service.GetChats(ctx, userID); err == nil {
 		t.Fatal("expected error, got nil")
 	}
@@ -99,9 +98,9 @@ func TestCreateChat_ReturnsErrorOnEmptyUserOne(t *testing.T) {
 
 	chatMockRepo := mocks.NewChatRepository(t)
 	userMockRepo := mocks.NewUserRepository(t)
-	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{}, errors.New("not found"))
+	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.CreateUserInput{}, errors.New("not found"))
 
-	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+	service := chatsvc.NewService(chatMockRepo)
 
 	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
 		t.Fatal("expected error, got nil")
@@ -115,10 +114,10 @@ func TestCreateChat_ReturnsErrorOnEmptyUserTwo(t *testing.T) {
 
 	chatMockRepo := mocks.NewChatRepository(t)
 	userMockRepo := mocks.NewUserRepository(t)
-	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{}, nil)
-	userMockRepo.EXPECT().GetUser(mock.Anything, otherUserID).Return(userRepo.User{}, errors.New("not found"))
+	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.CreateUserInput{}, nil)
+	userMockRepo.EXPECT().GetUser(mock.Anything, otherUserID).Return(userRepo.CreateUserInput{}, errors.New("not found"))
 
-	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+	service := chatsvc.NewService(chatMockRepo)
 
 	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
 		t.Fatal("expected error, got nil")
@@ -130,34 +129,22 @@ func TestCreateChat_ReturnsError(t *testing.T) {
 	currentUserID := uuid.New()
 	otherUserID := uuid.New()
 	chatInput := chatRepo.CreateChatInput{
-		ID: uuid.UUID{},
-		CurrentUser: chatRepo.User{
-			ID:        currentUserID,
-			ImageURL:  "",
-			FirstName: "Test 1",
-			LastName:  "",
-			Username:  "123",
-		},
-		OtherUser: chatRepo.User{
-			ID:        otherUserID,
-			ImageURL:  "",
-			FirstName: "Test 2",
-			LastName:  "",
-			Username:  "987",
-		},
+		ID:            uuid.UUID{},
+		CurrentUserID: currentUserID,
+		OtherUserID:   otherUserID,
 	}
 
 	chatMockRepo := mocks.NewChatRepository(t)
 	chatMockRepo.EXPECT().CreateChat(mock.Anything, chatInput).Return(errors.New("error"))
 	userMockRepo := mocks.NewUserRepository(t)
-	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.User{
+	userMockRepo.EXPECT().GetUser(mock.Anything, currentUserID).Return(userRepo.CreateUserInput{
 		ID:        currentUserID,
 		ImageURL:  "",
 		FirstName: "Test 1",
 		LastName:  "",
 		Username:  "123",
 	}, nil)
-	userMockRepo.EXPECT().GetUser(mock.Anything, otherUserID).Return(userRepo.User{
+	userMockRepo.EXPECT().GetUser(mock.Anything, otherUserID).Return(userRepo.CreateUserInput{
 		ID:        otherUserID,
 		ImageURL:  "",
 		FirstName: "Test 2",
@@ -165,7 +152,7 @@ func TestCreateChat_ReturnsError(t *testing.T) {
 		Username:  "987",
 	}, nil)
 
-	service := chatsvc.NewService(chatMockRepo, userMockRepo)
+	service := chatsvc.NewService(chatMockRepo)
 
 	if err := service.CreateChat(ctx, currentUserID, otherUserID); err == nil {
 		t.Fatal("expected error, got nil")

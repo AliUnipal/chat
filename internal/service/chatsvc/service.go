@@ -6,7 +6,6 @@ import (
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/models/user"
 	chatRepo "github.com/AliUnipal/chat/internal/service/chatsvc/repo"
-	userRepo "github.com/AliUnipal/chat/internal/service/usersvc/repo"
 	"github.com/google/uuid"
 )
 
@@ -33,46 +32,20 @@ type chatRepository interface {
 	GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatRepo.Chat, error)
 }
 
-type userRepository interface {
-	GetUser(ctx context.Context, id uuid.UUID) (userRepo.User, error)
-}
-
 var _ chatService = (*service)(nil)
 
-func NewService(chatRepo chatRepository, userRepo userRepository) *service {
-	return &service{chatRepo, userRepo}
+func NewService(chatRepo chatRepository) *service {
+	return &service{chatRepo}
 }
 
 type service struct {
 	chatRepo chatRepository
-	userRepo userRepository
 }
 
 func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error {
-	u1, err := s.userRepo.GetUser(ctx, currentUserID)
-	if err != nil {
-		return err
-	}
-	u2, err := s.userRepo.GetUser(ctx, otherUserID)
-	if err != nil {
-		return err
-	}
-
 	if err := s.chatRepo.CreateChat(ctx, chatRepo.CreateChatInput{
-		CurrentUser: chatRepo.User{
-			ID:        u1.ID,
-			ImageURL:  u1.ImageURL,
-			FirstName: u1.FirstName,
-			LastName:  u1.LastName,
-			Username:  u1.Username,
-		},
-		OtherUser: chatRepo.User{
-			ID:        u2.ID,
-			ImageURL:  u2.ImageURL,
-			FirstName: u2.FirstName,
-			LastName:  u2.LastName,
-			Username:  u2.Username,
-		},
+		CurrentUserID: currentUserID,
+		OtherUserID:   otherUserID,
 	}); err != nil {
 		return err
 	}
