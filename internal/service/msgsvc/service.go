@@ -2,6 +2,7 @@ package msgsvc
 
 import (
 	"context"
+	"errors"
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/repo"
 	"github.com/google/uuid"
@@ -13,13 +14,11 @@ type MessageInput struct {
 	ChatID      uuid.UUID
 	Content     []byte
 	ContentType message.ContentType
-	Timestamp   time.Time
 }
 
 // TODO: Ask about how the middleware/authorization for creating and getting message. And if it change the structure of the methods
 type messageService interface {
 	CreateMessage(ctx context.Context, in MessageInput) (uuid.UUID, error)
-	GetMessage(ctx context.Context, id, chatID uuid.UUID) (message.Message, error)
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error)
 }
 
@@ -40,6 +39,16 @@ func NewService(repo messageRepository) *service {
 }
 
 func (s *service) CreateMessage(ctx context.Context, in MessageInput) (uuid.UUID, error) {
+	if in.Content == nil || len(in.Content) == 0 {
+		return uuid.Nil, errors.New("content is empty")
+	}
+	if in.ChatID == uuid.Nil {
+		return uuid.Nil, errors.New("chatID is empty")
+	}
+	if in.SenderID == uuid.Nil {
+		return uuid.Nil, errors.New("senderID is empty")
+	}
+
 	id := uuid.New()
 
 	if err := s.repo.CreateMessage(ctx, repo.CreateMessageInput{
@@ -48,28 +57,12 @@ func (s *service) CreateMessage(ctx context.Context, in MessageInput) (uuid.UUID
 		ChatID:      in.ChatID,
 		Content:     in.Content,
 		ContentType: in.ContentType,
-		Timestamp:   in.Timestamp,
+		Timestamp:   time.Now().UTC(),
 	}); err != nil {
 		return uuid.Nil, err
 	}
 
 	return id, nil
-}
-
-func (s *service) GetMessage(ctx context.Context, id, chatID uuid.UUID) (message.Message, error) {
-	m, err := s.repo.GetMessage(ctx, id, chatID)
-	if err != nil {
-		return message.Message{}, err
-	}
-
-	return message.Message{
-		ID:          m.ID,
-		SenderID:    m.SenderID,
-		ChatID:      m.ChatID,
-		Content:     m.Content,
-		ContentType: m.ContentType,
-		Timestamp:   m.Timestamp,
-	}, nil
 }
 
 func (s *service) GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error) {
