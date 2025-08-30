@@ -6,6 +6,7 @@ import (
 	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
 	"github.com/google/uuid"
+	"net/url"
 )
 
 type CreateUserInput struct {
@@ -41,6 +42,10 @@ func (s *service) CreateUser(ctx context.Context, in CreateUserInput) (uuid.UUID
 	}
 	if in.Username == "" {
 		return uuid.Nil, errors.New("username is required")
+	}
+	u, err := url.ParseRequestURI(in.ImageURL)
+	if err != nil || u == nil || u.Scheme == "" || u.Host == "" {
+		return uuid.Nil, errors.New("image url is invalid")
 	}
 
 	userID := uuid.New()

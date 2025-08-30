@@ -5,7 +5,7 @@ import (
 	"github.com/AliUnipal/chat/internal/models/chat"
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/models/user"
-	chatRepo "github.com/AliUnipal/chat/internal/service/chatsvc/repo"
+	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
 	"github.com/google/uuid"
 )
 
@@ -28,8 +28,8 @@ type chatService interface {
 }
 
 type chatRepository interface {
-	CreateChat(ctx context.Context, chat chatRepo.CreateChatInput) error
-	GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatRepo.Chat, error)
+	CreateChat(ctx context.Context, chat repo.CreateChatInput) error
+	GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*repo.Chat, error)
 }
 
 var _ chatService = (*service)(nil)
@@ -44,7 +44,7 @@ type service struct {
 
 func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) (uuid.UUID, error) {
 	id := uuid.New()
-	if err := s.chatRepo.CreateChat(ctx, chatRepo.CreateChatInput{
+	if err := s.chatRepo.CreateChat(ctx, repo.CreateChatInput{
 		ID:            id,
 		CurrentUserID: currentUserID,
 		OtherUserID:   otherUserID,

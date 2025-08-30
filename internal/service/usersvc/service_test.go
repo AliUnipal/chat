@@ -15,7 +15,7 @@ import (
 func TestCreateUser_ReturnID(t *testing.T) {
 	ctx := context.Background()
 	userInput := usersvc.CreateUserInput{
-		ImageURL:  "https://s3....",
+		ImageURL:  "https://test.png",
 		FirstName: "First CreateUserInput",
 		LastName:  "Test",
 		Username:  "+97312345678",
@@ -44,7 +44,7 @@ func TestCreateUser_ReturnID(t *testing.T) {
 func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 	ctx := context.Background()
 	userInput := usersvc.CreateUserInput{
-		ImageURL: "Image",
+		ImageURL: "https://test.png",
 		LastName: "Last Name",
 		Username: "+97312345678",
 	}
@@ -60,9 +60,26 @@ func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 	ctx := context.Background()
 	userInput := usersvc.CreateUserInput{
-		ImageURL:  "",
+		ImageURL:  "https://test.png",
 		FirstName: "First Name",
 		LastName:  "Last Name",
+	}
+
+	mockRepo := mocks.NewUserRepository(t)
+	service := usersvc.NewService(mockRepo)
+
+	if _, err := service.CreateUser(ctx, userInput); err == nil {
+		t.Fatalf("Expected error got %v", err)
+	}
+}
+
+func TestCreateUser_ReturnErrorOnInvalidImageURL(t *testing.T) {
+	ctx := context.Background()
+	userInput := usersvc.CreateUserInput{
+		ImageURL:  "/test.png",
+		FirstName: "First Name",
+		LastName:  "Last Name",
+		Username:  "+97312345678",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
@@ -76,7 +93,7 @@ func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 func TestCreateUser_ReturnError(t *testing.T) {
 	ctx := context.Background()
 	userInput := usersvc.CreateUserInput{
-		ImageURL:  "",
+		ImageURL:  "https://test.png",
 		FirstName: "First Name",
 		LastName:  "Last Name",
 		Username:  "+97312345678",
@@ -97,7 +114,7 @@ func TestGetUser_ReturnUser(t *testing.T) {
 	userID := uuid.New()
 	expectedUser := user.User{
 		ID:        userID,
-		ImageURL:  "https://test..",
+		ImageURL:  "https://test.png",
 		FirstName: "First Name",
 		LastName:  "Last Name",
 		Username:  "+97312345678",
