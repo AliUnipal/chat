@@ -8,6 +8,7 @@ import (
 type Message struct {
 	ID          uuid.UUID
 	SenderID    uuid.UUID
+	ChatID      uuid.UUID
 	Content     []byte
 	ContentType ContentType
 	Timestamp   time.Time
