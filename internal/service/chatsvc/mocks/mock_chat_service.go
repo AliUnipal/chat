@@ -40,20 +40,31 @@ func (_m *ChatService) EXPECT() *ChatService_Expecter {
 }
 
 // CreateChat provides a mock function for the type ChatService
-func (_mock *ChatService) CreateChat(ctx context.Context, currentUserID uuid.UUID, otherUserID uuid.UUID) error {
+func (_mock *ChatService) CreateChat(ctx context.Context, currentUserID uuid.UUID, otherUserID uuid.UUID) (uuid.UUID, error) {
 	ret := _mock.Called(ctx, currentUserID, otherUserID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateChat")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+	var r0 uuid.UUID
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) (uuid.UUID, error)); ok {
+		return returnFunc(ctx, currentUserID, otherUserID)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID, uuid.UUID) uuid.UUID); ok {
 		r0 = returnFunc(ctx, currentUserID, otherUserID)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, currentUserID, otherUserID)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
 // ChatService_CreateChat_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateChat'
@@ -92,12 +103,12 @@ func (_c *ChatService_CreateChat_Call) Run(run func(ctx context.Context, current
 	return _c
 }
 
-func (_c *ChatService_CreateChat_Call) Return(err error) *ChatService_CreateChat_Call {
-	_c.Call.Return(err)
+func (_c *ChatService_CreateChat_Call) Return(uUID uuid.UUID, err error) *ChatService_CreateChat_Call {
+	_c.Call.Return(uUID, err)
 	return _c
 }
 
-func (_c *ChatService_CreateChat_Call) RunAndReturn(run func(ctx context.Context, currentUserID uuid.UUID, otherUserID uuid.UUID) error) *ChatService_CreateChat_Call {
+func (_c *ChatService_CreateChat_Call) RunAndReturn(run func(ctx context.Context, currentUserID uuid.UUID, otherUserID uuid.UUID) (uuid.UUID, error)) *ChatService_CreateChat_Call {
 	_c.Call.Return(run)
 	return _c
 }

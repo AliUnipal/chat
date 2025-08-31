@@ -2,7 +2,6 @@ package chatsvc
 
 import (
 	"context"
-	"errors"
 	"github.com/AliUnipal/chat/internal/models/chat"
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/models/user"
@@ -24,7 +23,7 @@ import (
 // 3. Write unit tests for the service methods
 
 type chatService interface {
-	CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error
+	CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) (uuid.UUID, error)
 	GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error)
 }
 
@@ -35,39 +34,35 @@ type chatRepository interface {
 
 var _ chatService = (*service)(nil)
 
-func NewService(repo chatRepository) *service {
-	return &service{repo}
+func NewService(chatRepo chatRepository) *service {
+	return &service{chatRepo}
 }
 
 type service struct {
-	repo chatRepository
+	chatRepo chatRepository
 }
 
-func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) error {
-	if currentUserID == uuid.Nil {
-		return errors.New("current user ID is missing")
-	}
-	if otherUserID == uuid.Nil {
-		return errors.New("other user ID is missing")
-	}
-
-	if err := s.repo.CreateChat(ctx, repo.CreateChatInput{
-		UserOneID: currentUserID,
-		UserTwoID: otherUserID,
+func (s *service) CreateChat(ctx context.Context, currentUserID, otherUserID uuid.UUID) (uuid.UUID, error) {
+	id := uuid.New()
+	if err := s.chatRepo.CreateChat(ctx, repo.CreateChatInput{
+		ID:            id,
+		CurrentUserID: currentUserID,
+		OtherUserID:   otherUserID,
 	}); err != nil {
-		return err
+		return uuid.Nil, err
 	}
 
-	return nil
+	return id, nil
 }
 
 func (s *service) GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error) {
-	c, err := s.repo.GetChatsByUser(ctx, userID)
+	c, err := s.chatRepo.GetChatsByUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 	chats := make([]chat.Chat, len(c))
 	for i, c := range c {
+		// TODO: Move the messages into its own service.
 		messages := make([]message.Message, len(c.Messages))
 		for j, m := range c.Messages {
 			messages[j] = message.Message{
