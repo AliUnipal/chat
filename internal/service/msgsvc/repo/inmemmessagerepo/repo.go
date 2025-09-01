@@ -16,7 +16,7 @@ func New(chatRepo chatRepository, msgs map[uuid.UUID][]repo.Message) *repository
 }
 
 type chatRepository interface {
-	GetChat(ctx context.Context, id uuid.UUID) (chatrepo.Chat, error)
+	GetChat(ctx context.Context, id uuid.UUID) (*chatrepo.Chat, error)
 }
 
 type repository struct {

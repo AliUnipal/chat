@@ -61,3 +61,13 @@ func (r *repository) CreateChat(ctx context.Context, in repo.CreateChatInput) er
 func (r *repository) GetChatsByUser(_ context.Context, userID uuid.UUID) ([]*repo.Chat, error) {
 	return r.userChats[userID], nil
 }
+
+func (r *repository) GetChat(_ context.Context, id uuid.UUID) (*repo.Chat, error) {
+	for _, chat := range r.chats {
+		if chat.ID == id {
+			return chat, nil
+		}
+	}
+
+	return nil, errors.New("chat not found")
+}

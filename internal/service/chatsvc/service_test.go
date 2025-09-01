@@ -1,7 +1,6 @@
 package chatsvc_test
 
 import (
-	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/service/chatsvc"
 	"github.com/AliUnipal/chat/internal/service/chatsvc/mocks"
@@ -14,7 +13,7 @@ import (
 // AAA - Arrange Act Assert
 
 func TestGetChats_ReturnChats(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userID := uuid.New()
 	otherUserOneID := uuid.New()
 	expectedChats := []*repo.Chat{
@@ -34,7 +33,6 @@ func TestGetChats_ReturnChats(t *testing.T) {
 				LastName:  "",
 				Username:  "",
 			},
-			Messages: nil,
 		},
 		&repo.Chat{
 			ID: userID,
@@ -52,7 +50,6 @@ func TestGetChats_ReturnChats(t *testing.T) {
 				LastName:  "",
 				Username:  "",
 			},
-			Messages: nil,
 		},
 	}
 
@@ -77,7 +74,7 @@ func TestGetChats_ReturnChats(t *testing.T) {
 }
 
 func TestGetChats_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
@@ -90,7 +87,7 @@ func TestGetChats_ReturnError(t *testing.T) {
 }
 
 func TestCreateChat_ReturnID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	currentUserID := uuid.New()
 	otherUserID := uuid.New()
 
@@ -113,7 +110,7 @@ func TestCreateChat_ReturnID(t *testing.T) {
 }
 
 func TestCreateChat_ReturnErrorOnEmptyUserOne(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	otherUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
@@ -131,7 +128,7 @@ func TestCreateChat_ReturnErrorOnEmptyUserOne(t *testing.T) {
 }
 
 func TestCreateChat_ReturnErrorOnEmptyUserTwo(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	currentUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
@@ -149,7 +146,7 @@ func TestCreateChat_ReturnErrorOnEmptyUserTwo(t *testing.T) {
 }
 
 func TestCreateChat_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	currentUserID := uuid.New()
 	otherUserID := uuid.New()
 

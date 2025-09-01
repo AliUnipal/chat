@@ -1,7 +1,6 @@
 package usersvc_test
 
 import (
-	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/service/usersvc"
@@ -13,7 +12,7 @@ import (
 )
 
 func TestCreateUser_ReturnID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "https://test.png",
 		FirstName: "First CreateUserInput",
@@ -42,7 +41,7 @@ func TestCreateUser_ReturnID(t *testing.T) {
 }
 
 func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL: "https://test.png",
 		LastName: "Last Name",
@@ -58,7 +57,7 @@ func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 }
 
 func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "https://test.png",
 		FirstName: "First Name",
@@ -73,8 +72,25 @@ func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 	}
 }
 
+func TestCreateUser_ReturnErrorOnEmptyImageURL(t *testing.T) {
+	ctx := t.Context()
+	userInput := usersvc.CreateUserInput{
+		ImageURL:  "",
+		FirstName: "First Name",
+		LastName:  "Last Name",
+		Username:  "+97312345678",
+	}
+
+	mockRepo := mocks.NewUserRepository(t)
+	service := usersvc.NewService(mockRepo)
+
+	if _, err := service.CreateUser(ctx, userInput); err == nil {
+		t.Fatalf("Expected error got %v", err)
+	}
+}
+
 func TestCreateUser_ReturnErrorOnInvalidImageURL(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "/test.png",
 		FirstName: "First Name",
@@ -91,7 +107,7 @@ func TestCreateUser_ReturnErrorOnInvalidImageURL(t *testing.T) {
 }
 
 func TestCreateUser_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "https://test.png",
 		FirstName: "First Name",
@@ -110,7 +126,7 @@ func TestCreateUser_ReturnError(t *testing.T) {
 }
 
 func TestGetUser_ReturnUser(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userID := uuid.New()
 	expectedUser := user.User{
 		ID:        userID,

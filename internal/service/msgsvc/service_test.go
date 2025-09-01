@@ -2,7 +2,6 @@ package msgsvc_test
 
 import (
 	"bytes"
-	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/service/msgsvc"
@@ -15,7 +14,7 @@ import (
 )
 
 func TestCreateMessage_ReturnID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	input := msgsvc.MessageInput{
 		SenderID:    uuid.New(),
 		ChatID:      uuid.New(),
@@ -44,7 +43,7 @@ func TestCreateMessage_ReturnID(t *testing.T) {
 }
 
 func TestCreateMessage_ReturnErrorOnEmptyContent(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	input := msgsvc.MessageInput{
 		SenderID:    uuid.New(),
 		ChatID:      uuid.New(),
@@ -61,7 +60,7 @@ func TestCreateMessage_ReturnErrorOnEmptyContent(t *testing.T) {
 }
 
 func TestCreateMessage_ReturnErrorOnNilSenderID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	input := msgsvc.MessageInput{
 		SenderID:    uuid.Nil,
 		ChatID:      uuid.New(),
@@ -78,7 +77,7 @@ func TestCreateMessage_ReturnErrorOnNilSenderID(t *testing.T) {
 }
 
 func TestCreateMessage_ReturnErrorOnNilChatID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	input := msgsvc.MessageInput{
 		SenderID:    uuid.New(),
 		ChatID:      uuid.Nil,
@@ -95,7 +94,7 @@ func TestCreateMessage_ReturnErrorOnNilChatID(t *testing.T) {
 }
 
 func TestCreateMessage_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	input := msgsvc.MessageInput{
 		SenderID:    uuid.New(),
 		ChatID:      uuid.New(),
@@ -119,7 +118,7 @@ func TestCreateMessage_ReturnError(t *testing.T) {
 }
 
 func TestGetMessages_ReturnMessages(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	chatID := uuid.New()
 	expectedMessages := []message.Message{
 		{
@@ -185,7 +184,7 @@ func TestGetMessages_ReturnMessages(t *testing.T) {
 }
 
 func TestGetMessages_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	chatID := uuid.New()
 
 	mockRepo := mocks.NewMessageRepository(t)
