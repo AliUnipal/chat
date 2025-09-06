@@ -24,7 +24,6 @@ type messageService interface {
 
 type messageRepository interface {
 	CreateMessage(ctx context.Context, in repo.CreateMessageInput) error
-	GetMessage(ctx context.Context, id, chatID uuid.UUID) (repo.Message, error)
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]repo.Message, error)
 }
 
