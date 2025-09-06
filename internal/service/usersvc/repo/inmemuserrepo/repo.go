@@ -4,20 +4,33 @@ import (
 	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
+	"github.com/AliUnipal/chat/pkg/snapper"
 	"github.com/google/uuid"
+	"log"
 )
 
-func New(users ...repo.CreateUserInput) *repository {
-	v := make(map[uuid.UUID]repo.CreateUserInput)
-	for _, user := range users {
-		v[user.ID] = user
+// NOTE: The context is required for the snapper load.
+func New(ctx context.Context) *repository {
+	var data users
+
+	s := snapper.NewFileSnapper[users]("user_data.json")
+	d, err := s.Load(ctx)
+
+	if err != nil {
+		log.Println(err)
+		data = make(users)
+	} else {
+		data = d
 	}
 
-	return &repository{v}
+	return &repository{data, s}
 }
 
+type users = map[uuid.UUID]repo.CreateUserInput
+
 type repository struct {
-	users map[uuid.UUID]repo.CreateUserInput
+	users   users
+	snapper *snapper.FileSnapper[users]
 }
 
 func (r *repository) CreateUser(_ context.Context, in repo.CreateUserInput) error {
@@ -45,4 +58,13 @@ func (r *repository) GetUser(_ context.Context, id uuid.UUID) (repo.CreateUserIn
 	}
 
 	return user, nil
+}
+
+func (r *repository) Close(ctx context.Context) error {
+	err := r.snapper.Snap(ctx, r.users)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

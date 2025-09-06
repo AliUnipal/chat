@@ -10,7 +10,6 @@ import (
 	"github.com/AliUnipal/chat/internal/service/chatsvc"
 	"github.com/AliUnipal/chat/internal/service/chatsvc/repo/inmemchatrepo"
 	"github.com/AliUnipal/chat/internal/service/msgsvc"
-	"github.com/AliUnipal/chat/internal/service/msgsvc/repo"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/repo/inmemmessagerepo"
 	"github.com/AliUnipal/chat/internal/service/usersvc"
 	"github.com/AliUnipal/chat/internal/service/usersvc/repo/inmemuserrepo"
@@ -42,11 +41,13 @@ type application struct {
 }
 
 func main() {
-	userRepo := inmemuserrepo.New()
+	ctx := context.Background()
+
+	userRepo := inmemuserrepo.New(ctx)
 	userSvc := usersvc.NewService(userRepo)
-	chatRepo := inmemchatrepo.New(userRepo)
+	chatRepo := inmemchatrepo.New(ctx, userRepo)
 	chatSvc := chatsvc.NewService(chatRepo)
-	messageRepo := inmemmessagerepo.New(chatRepo, make(map[uuid.UUID][]repo.Message))
+	messageRepo := inmemmessagerepo.New(ctx, chatRepo)
 	msgSvc := msgsvc.NewService(messageRepo)
 
 	app := &application{
@@ -102,11 +103,17 @@ func main() {
 		}
 		userInput.ImageURL = v
 
-		userID, err := app.userSvc.CreateUser(context.Background(), userInput)
+		userID, err := app.userSvc.CreateUser(ctx, userInput)
 		if err != nil {
 			log.Println(err)
 			os.Exit(1)
 		}
+
+		err = userRepo.Close(ctx)
+		if err != nil {
+			log.Fatal(err)
+		}
+
 		fmt.Println("User created:", userID)
 		os.Exit(0)
 	case "get-user":
@@ -119,7 +126,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		u, err := app.userSvc.GetUser(context.Background(), id)
+		u, err := app.userSvc.GetUser(ctx, id)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -145,7 +152,12 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		chatID, err := app.chatSvc.CreateChat(context.Background(), fUserID, oUserID)
+		chatID, err := app.chatSvc.CreateChat(ctx, fUserID, oUserID)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = chatRepo.Close(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -161,7 +173,7 @@ func main() {
 		if err != nil {
 			log.Fatal(err)
 		}
-		chats, err := app.chatSvc.GetChats(context.Background(), userID)
+		chats, err := app.chatSvc.GetChats(ctx, userID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -204,12 +216,17 @@ func main() {
 		//	log.Fatal(err)
 		//}
 
-		msgID, err := app.messageSvc.CreateMessage(context.Background(), msgsvc.MessageInput{
+		msgID, err := app.messageSvc.CreateMessage(ctx, msgsvc.MessageInput{
 			SenderID:    senderID,
 			ChatID:      chatID,
 			Content:     []byte(cont),
 			ContentType: 0,
 		})
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		err = messageRepo.Close(ctx)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -226,7 +243,7 @@ func main() {
 			log.Fatal(err)
 		}
 
-		msgs, err := app.messageSvc.GetMessages(context.Background(), chatID)
+		msgs, err := app.messageSvc.GetMessages(ctx, chatID)
 		if err != nil {
 			log.Fatal(err)
 		}
