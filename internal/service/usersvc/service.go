@@ -23,7 +23,7 @@ type userService interface {
 
 type userRepository interface {
 	CreateUser(ctx context.Context, in repo.CreateUserInput) error
-	GetUser(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error)
+	GetUser(ctx context.Context, id uuid.UUID) (repo.User, error)
 }
 
 type service struct {

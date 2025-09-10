@@ -26,7 +26,7 @@ func New(ctx context.Context) *repository {
 	return &repository{data, s}
 }
 
-type users = map[uuid.UUID]repo.CreateUserInput
+type users = map[uuid.UUID]repo.User
 
 type repository struct {
 	users   users
@@ -47,14 +47,14 @@ func (r *repository) CreateUser(_ context.Context, in repo.CreateUserInput) erro
 		return errors.New("username is required")
 	}
 
-	r.users[in.ID] = in
+	r.users[in.ID] = repo.User(in)
 	return nil
 }
 
-func (r *repository) GetUser(_ context.Context, id uuid.UUID) (repo.CreateUserInput, error) {
+func (r *repository) GetUser(_ context.Context, id uuid.UUID) (repo.User, error) {
 	user, ok := r.users[id]
 	if !ok {
-		return repo.CreateUserInput{}, errors.New("user does not exist")
+		return repo.User{}, errors.New("user does not exist")
 	}
 
 	return user, nil

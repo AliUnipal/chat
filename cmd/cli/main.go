@@ -1,8 +1,9 @@
 package main
 
 import (
-	"bufio"
 	"context"
+	"errors"
+	"flag"
 	"fmt"
 	"github.com/AliUnipal/chat/internal/models/chat"
 	"github.com/AliUnipal/chat/internal/models/message"
@@ -40,6 +41,170 @@ type application struct {
 	messageSvc messageService
 }
 
+func getCreateUserInput(args []string) (usersvc.CreateUserInput, error) {
+	var userInput usersvc.CreateUserInput
+
+	userFlags := flag.NewFlagSet("createUser", flag.ExitOnError)
+	firstName := userFlags.String("firstName", "", "First name (Required)")
+	lastName := userFlags.String("lastName", "", "Last name")
+	username := userFlags.String("username", "", "Username (Required)")
+	imageURL := userFlags.String("imageUrl", "", "Image URL (Required)")
+
+	err := userFlags.Parse(args)
+	if err != nil {
+		return userInput, err
+	}
+
+	if *firstName == "" {
+		return userInput, errors.New("missing -firstName")
+	}
+	if *username == "" {
+		return userInput, errors.New("missing -username")
+	}
+	if *imageURL == "" {
+		return userInput, errors.New("missing -imageUrl")
+	}
+
+	userInput = usersvc.CreateUserInput{
+		FirstName: *firstName,
+		LastName:  *lastName,
+		Username:  *username,
+		ImageURL:  *imageURL,
+	}
+
+	return userInput, nil
+}
+
+func getGetUserInput(args []string) (uuid.UUID, error) {
+	getUserFlags := flag.NewFlagSet("getUser", flag.ExitOnError)
+	strID := getUserFlags.String("id", "", "User ID")
+
+	err := getUserFlags.Parse(args)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	if *strID == "" {
+		return uuid.Nil, errors.New("missing -id")
+	}
+
+	id, err := uuid.Parse(*strID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
+}
+
+func getCreateChatInput(args []string) ([2]uuid.UUID, error) {
+	createChatFlags := flag.NewFlagSet("createChat", flag.ExitOnError)
+	currID := createChatFlags.String("currentUserID", "", "Current User ID (Required)")
+	otherID := createChatFlags.String("otherUserID", "", "Other User ID (Required)")
+
+	err := createChatFlags.Parse(args)
+	if err != nil {
+		return [2]uuid.UUID{}, err
+	}
+
+	if *currID == "" {
+		return [2]uuid.UUID{}, errors.New("missing -currentUserID")
+	}
+	if *otherID == "" {
+		return [2]uuid.UUID{}, errors.New("missing -otherUserID")
+	}
+	pCurrID, err := uuid.Parse(*currID)
+	if err != nil {
+		return [2]uuid.UUID{}, err
+	}
+	pOtherID, err := uuid.Parse(*otherID)
+	if err != nil {
+		return [2]uuid.UUID{}, err
+	}
+
+	return [2]uuid.UUID{pCurrID, pOtherID}, nil
+}
+
+func getUserID(args []string) (uuid.UUID, error) {
+	userIDFlags := flag.NewFlagSet("getUserID", flag.ExitOnError)
+	strID := userIDFlags.String("id", "", "User ID (Required)")
+
+	err := userIDFlags.Parse(args)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	if *strID == "" {
+		return uuid.Nil, errors.New("missing -id")
+	}
+	id, err := uuid.Parse(*strID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return id, nil
+}
+
+func getSendMsgInput(args []string) (msgsvc.MessageInput, error) {
+	var msgInput msgsvc.MessageInput
+	msgFlags := flag.NewFlagSet("sendMsg", flag.ExitOnError)
+	strSenderID := msgFlags.String("senderID", "", "Sender ID (Required)")
+	strChatID := msgFlags.String("chatID", "", "ChatID (Required)")
+	cont := msgFlags.String("content", "", "Content (Required)")
+
+	err := msgFlags.Parse(args)
+	if err != nil {
+		return msgInput, err
+	}
+
+	if *strSenderID == "" {
+		return msgInput, errors.New("missing -senderID")
+	}
+	if *strChatID == "" {
+		return msgInput, errors.New("missing -chatID")
+	}
+	if *cont == "" {
+		return msgInput, errors.New("missing -content")
+	}
+
+	senderID, err := uuid.Parse(*strSenderID)
+	if err != nil {
+		return msgInput, err
+	}
+	chatID, err := uuid.Parse(*strChatID)
+	if err != nil {
+		return msgInput, err
+	}
+
+	msgInput = msgsvc.MessageInput{
+		SenderID:    senderID,
+		ChatID:      chatID,
+		Content:     []byte(*cont),
+		ContentType: message.TextContentType,
+	}
+
+	return msgInput, nil
+}
+
+func getChatIDInput(args []string) (uuid.UUID, error) {
+	chatFlags := flag.NewFlagSet("getChatID", flag.ExitOnError)
+	strChatID := chatFlags.String("chatID", "", "ChatID (Required)")
+
+	err := chatFlags.Parse(args)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	if *strChatID == "" {
+		return uuid.Nil, errors.New("missing -chatID")
+	}
+	chatID, err := uuid.Parse(*strChatID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	return chatID, nil
+}
+
 func main() {
 	ctx := context.Background()
 
@@ -65,7 +230,6 @@ func main() {
 	if cmd == "" {
 		log.Fatal("invalid command")
 	}
-	reader := bufio.NewReader(os.Stdin)
 
 	switch cmd {
 	case "help":
@@ -78,30 +242,10 @@ func main() {
 - get-messages`)
 		os.Exit(0)
 	case "create-user":
-		var userInput usersvc.CreateUserInput
-		v, err := read(reader, "first name", true)
+		userInput, err := getCreateUserInput(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
-		userInput.FirstName = v
-
-		v, err = read(reader, "last name", false)
-		if err != nil {
-			log.Fatal(err)
-		}
-		userInput.LastName = v
-
-		v, err = read(reader, "username", true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		userInput.Username = v
-
-		v, err = read(reader, "image URL", false)
-		if err != nil {
-			log.Fatal(err)
-		}
-		userInput.ImageURL = v
 
 		userID, err := app.userSvc.CreateUser(ctx, userInput)
 		if err != nil {
@@ -114,14 +258,16 @@ func main() {
 			log.Fatal(err)
 		}
 
-		fmt.Println("User created:", userID)
+		fmt.Printf("User created:%+v\n", user.User{
+			ID:        userID,
+			ImageURL:  userInput.ImageURL,
+			FirstName: userInput.FirstName,
+			LastName:  userInput.LastName,
+			Username:  userInput.Username,
+		})
 		os.Exit(0)
 	case "get-user":
-		strID, err := read(reader, "user ID", true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		id, err := uuid.Parse(strID)
+		id, err := getGetUserInput(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -132,27 +278,17 @@ func main() {
 		}
 
 		fmt.Printf(
-			"User Details:\n Name: %s %s\nImage URL: %s\nUsername: %s\n",
+			"User Details:\n\nName: %s %s\nImage URL: %s\nUsername: %s\n",
 			u.FirstName, u.LastName, u.ImageURL, u.Username,
 		)
 	case "create-chat":
-		firstID, err := read(reader, "first user ID", true)
+		ids, err := getCreateChatInput(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
-		fUserID, err := uuid.Parse(firstID)
-		if err != nil {
-			log.Fatal(err)
-		}
-		secondID, err := read(reader, "second user ID", true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		oUserID, err := uuid.Parse(secondID)
-		if err != nil {
-			log.Fatal(err)
-		}
-		chatID, err := app.chatSvc.CreateChat(ctx, fUserID, oUserID)
+		currID, otherID := ids[0], ids[1]
+
+		chatID, err := app.chatSvc.CreateChat(ctx, currID, otherID)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -165,14 +301,11 @@ func main() {
 		fmt.Println("Created chat ID:", chatID)
 		os.Exit(0)
 	case "get-chats-by-user":
-		in, err := read(reader, "user ID", true)
+		userID, err := getUserID(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
-		userID, err := uuid.Parse(in)
-		if err != nil {
-			log.Fatal(err)
-		}
+
 		chats, err := app.chatSvc.GetChats(ctx, userID)
 		if err != nil {
 			log.Fatal(err)
@@ -180,48 +313,20 @@ func main() {
 
 		for i, c := range chats {
 			fmt.Println("------")
-			fmt.Println("Chat No.: ", i)
+			fmt.Println("Chat No.:", i)
 			fmt.Printf("Chat ID: %s\n", c.ID)
-			fmt.Printf("User one ID: %s\n", c.CurrentUser)
-			fmt.Printf("User two ID: %s\n", c.OtherUser)
+			fmt.Printf("User one: %+v\n", c.CurrentUser)
+			fmt.Printf("User two: %+v\n", c.OtherUser)
 		}
 
 		os.Exit(0)
 	case "send-message":
-		senderIDIn, err := read(reader, "sender ID", true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		senderID, err := uuid.Parse(senderIDIn)
-		if err != nil {
-			log.Fatal(err)
-		}
-		chatIDIn, err := read(reader, "chat ID", true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		chatID, err := uuid.Parse(chatIDIn)
+		msg, err := getSendMsgInput(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
 
-		cont, err := read(reader, "content", false)
-		if err != nil {
-			log.Fatal(err)
-		}
-		// TODO: will make it only text for now, later we do the rest.
-		//fmt.Println("Content Types:")
-		//contType, err := read(reader, "type", false)
-		//if err != nil {
-		//	log.Fatal(err)
-		//}
-
-		msgID, err := app.messageSvc.CreateMessage(ctx, msgsvc.MessageInput{
-			SenderID:    senderID,
-			ChatID:      chatID,
-			Content:     []byte(cont),
-			ContentType: 0,
-		})
+		msgID, err := app.messageSvc.CreateMessage(ctx, msg)
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -234,11 +339,7 @@ func main() {
 		fmt.Println("Created message ID:", msgID)
 		os.Exit(0)
 	case "get-messages":
-		chatIDIn, err := read(reader, "chat ID", true)
-		if err != nil {
-			log.Fatal(err)
-		}
-		chatID, err := uuid.Parse(chatIDIn)
+		chatID, err := getChatIDInput(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
@@ -260,19 +361,4 @@ func main() {
 	default:
 		log.Fatal("unknown command")
 	}
-
-}
-
-func read(reader *bufio.Reader, fieldName string, required bool) (string, error) {
-	fmt.Printf("Enter your %s:\n", fieldName)
-	in, err := reader.ReadString('\n')
-	in = strings.TrimSpace(in)
-	if err != nil {
-		return "", err
-	}
-	if in == "" && required {
-		return "", fmt.Errorf("missing required field: %s", fieldName)
-	}
-
-	return in, nil
 }

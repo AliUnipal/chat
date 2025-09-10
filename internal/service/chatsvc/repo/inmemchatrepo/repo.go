@@ -47,7 +47,7 @@ type repository struct {
 }
 
 type userRepository interface {
-	GetUser(ctx context.Context, id uuid.UUID) (userRepo.CreateUserInput, error)
+	GetUser(ctx context.Context, id uuid.UUID) (userRepo.User, error)
 }
 
 func (r *repository) CreateChat(ctx context.Context, in repo.CreateChatInput) error {
@@ -58,7 +58,7 @@ func (r *repository) CreateChat(ctx context.Context, in repo.CreateChatInput) er
 		return errors.New("chat already exists")
 	}
 	if in.CurrentUserID == in.OtherUserID {
-		return errors.New("user ids are matching")
+		return errors.New("user ids are matching, you cannot create a chat with yourself!")
 	}
 
 	cu, err := r.userRepo.GetUser(ctx, in.CurrentUserID)
@@ -75,15 +75,25 @@ func (r *repository) CreateChat(ctx context.Context, in repo.CreateChatInput) er
 		CurrentUser: repo.User(cu),
 		OtherUser:   repo.User(ou),
 	}
+	oppositeChat := &repo.Chat{
+		ID:          in.ID,
+		CurrentUser: repo.User(ou),
+		OtherUser:   repo.User(cu),
+	}
 
 	r.Chats[id] = chat
 	r.UserChats[in.CurrentUserID] = append(r.UserChats[in.CurrentUserID], chat)
-	r.UserChats[in.OtherUserID] = append(r.UserChats[in.OtherUserID], chat)
+	r.UserChats[in.OtherUserID] = append(r.UserChats[in.OtherUserID], oppositeChat)
 
 	return nil
 }
 
-func (r *repository) GetChatsByUser(_ context.Context, userID uuid.UUID) ([]*repo.Chat, error) {
+func (r *repository) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*repo.Chat, error) {
+	_, err := r.userRepo.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
 	return r.UserChats[userID], nil
 }
 
