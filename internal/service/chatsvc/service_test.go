@@ -145,6 +145,24 @@ func TestCreateChat_ReturnErrorOnEmptyUserTwo(t *testing.T) {
 	}
 }
 
+func TestCreateChat_ReturnErrorOnIdenticalIDs(t *testing.T) {
+	ctx := t.Context()
+	currentUserID := uuid.New()
+
+	chatMockRepo := mocks.NewChatRepository(t)
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+		return c.ID != uuid.Nil &&
+			c.CurrentUserID == currentUserID &&
+			c.OtherUserID == currentUserID
+	})).Return(errors.New("error"))
+
+	service := chatsvc.NewService(chatMockRepo)
+
+	if _, err := service.CreateChat(ctx, currentUserID, currentUserID); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestCreateChat_ReturnError(t *testing.T) {
 	ctx := t.Context()
 	currentUserID := uuid.New()

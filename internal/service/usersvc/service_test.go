@@ -137,7 +137,7 @@ func TestGetUser_ReturnUser(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().GetUser(ctx, userID).Return(repo.CreateUserInput{
+	mockRepo.EXPECT().GetUser(ctx, userID).Return(repo.User{
 		ID:        expectedUser.ID,
 		ImageURL:  expectedUser.ImageURL,
 		FirstName: expectedUser.FirstName,

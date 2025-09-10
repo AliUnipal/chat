@@ -7,6 +7,7 @@ package mocks
 import (
 	"context"
 
+	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -38,36 +39,47 @@ func (_m *ChatRepository) EXPECT() *ChatRepository_Expecter {
 	return &ChatRepository_Expecter{mock: &_m.Mock}
 }
 
-// CheckChatExist provides a mock function for the type ChatRepository
-func (_mock *ChatRepository) CheckChatExist(ctx context.Context, id uuid.UUID) error {
+// GetChat provides a mock function for the type ChatRepository
+func (_mock *ChatRepository) GetChat(ctx context.Context, id uuid.UUID) (*repo.Chat, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for CheckChatExist")
+		panic("no return value specified for GetChat")
 	}
 
-	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) error); ok {
+	var r0 *repo.Chat
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*repo.Chat, error)); ok {
+		return returnFunc(ctx, id)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *repo.Chat); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
-		r0 = ret.Error(0)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*repo.Chat)
+		}
 	}
-	return r0
+	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
+		r1 = returnFunc(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
 }
 
-// ChatRepository_CheckChatExist_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CheckChatExist'
-type ChatRepository_CheckChatExist_Call struct {
+// ChatRepository_GetChat_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetChat'
+type ChatRepository_GetChat_Call struct {
 	*mock.Call
 }
 
-// CheckChatExist is a helper method to define mock.On call
+// GetChat is a helper method to define mock.On call
 //   - ctx context.Context
 //   - id uuid.UUID
-func (_e *ChatRepository_Expecter) CheckChatExist(ctx interface{}, id interface{}) *ChatRepository_CheckChatExist_Call {
-	return &ChatRepository_CheckChatExist_Call{Call: _e.mock.On("CheckChatExist", ctx, id)}
+func (_e *ChatRepository_Expecter) GetChat(ctx interface{}, id interface{}) *ChatRepository_GetChat_Call {
+	return &ChatRepository_GetChat_Call{Call: _e.mock.On("GetChat", ctx, id)}
 }
 
-func (_c *ChatRepository_CheckChatExist_Call) Run(run func(ctx context.Context, id uuid.UUID)) *ChatRepository_CheckChatExist_Call {
+func (_c *ChatRepository_GetChat_Call) Run(run func(ctx context.Context, id uuid.UUID)) *ChatRepository_GetChat_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
@@ -85,12 +97,12 @@ func (_c *ChatRepository_CheckChatExist_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *ChatRepository_CheckChatExist_Call) Return(err error) *ChatRepository_CheckChatExist_Call {
-	_c.Call.Return(err)
+func (_c *ChatRepository_GetChat_Call) Return(chat *repo.Chat, err error) *ChatRepository_GetChat_Call {
+	_c.Call.Return(chat, err)
 	return _c
 }
 
-func (_c *ChatRepository_CheckChatExist_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) error) *ChatRepository_CheckChatExist_Call {
+func (_c *ChatRepository_GetChat_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*repo.Chat, error)) *ChatRepository_GetChat_Call {
 	_c.Call.Return(run)
 	return _c
 }
