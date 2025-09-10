@@ -23,7 +23,7 @@ type userService interface {
 
 type userRepository interface {
 	CreateUser(ctx context.Context, in repo.CreateUserInput) error
-	GetUser(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error)
+	GetUser(ctx context.Context, id uuid.UUID) (repo.User, error)
 }
 
 type service struct {
@@ -42,6 +42,9 @@ func (s *service) CreateUser(ctx context.Context, in CreateUserInput) (uuid.UUID
 	}
 	if in.Username == "" {
 		return uuid.Nil, errors.New("username is required")
+	}
+	if in.ImageURL == "" {
+		return uuid.Nil, errors.New("image url is required")
 	}
 	u, err := url.ParseRequestURI(in.ImageURL)
 	if err != nil || u == nil || u.Scheme == "" || u.Host == "" {
