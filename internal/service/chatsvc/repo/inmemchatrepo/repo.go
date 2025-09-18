@@ -120,14 +120,8 @@ func (r *repository) Load(ctx context.Context) error {
 }
 
 func (r *repository) Close(ctx context.Context) error {
-	err := r.snapper.Snap(ctx, data{
+	return r.snapper.Snap(ctx, data{
 		Chats:     r.Chats,
 		UserChats: r.UserChats,
 	})
-
-	if err != nil {
-		return err
-	}
-
-	return nil
 }

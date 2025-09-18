@@ -45,7 +45,7 @@ func (r *repository) CreateMessage(ctx context.Context, in repo.CreateMessageInp
 	if err != nil {
 		return err
 	}
-	if c.CurrentUser.ID != in.SenderID && c.OtherUser.ID != in.SenderID {
+	if in.SenderID != c.CurrentUser.ID && in.SenderID != c.OtherUser.ID {
 		return errors.New("user does not belong to this chat")
 	}
 
@@ -71,10 +71,5 @@ func (r *repository) GetMessages(_ context.Context, chatID uuid.UUID) ([]repo.Me
 }
 
 func (r *repository) Close(ctx context.Context) error {
-	err := r.snapper.Snap(ctx, r.messages)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.snapper.Snap(ctx, r.messages)
 }

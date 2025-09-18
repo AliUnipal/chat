@@ -45,50 +45,43 @@ func getCreateUserInput(args []string) (usersvc.CreateUserInput, error) {
 	var userInput usersvc.CreateUserInput
 
 	userFlags := flag.NewFlagSet("createUser", flag.ExitOnError)
-	firstName := userFlags.String("firstName", "", "First name (Required)")
-	lastName := userFlags.String("lastName", "", "Last name")
-	username := userFlags.String("username", "", "Username (Required)")
-	imageURL := userFlags.String("imageUrl", "", "Image URL (Required)")
+	userFlags.StringVar(&userInput.FirstName, "firstName", "", "First name (Required)")
+	userFlags.StringVar(&userInput.LastName, "lastName", "potato", "Last name")
+	userFlags.StringVar(&userInput.FirstName, "username", "", "Username (Required)")
+	userFlags.StringVar(&userInput.FirstName, "imageUrl", "", "Image URL (Required)")
 
-	err := userFlags.Parse(args)
-	if err != nil {
+	if err := userFlags.Parse(args); err != nil {
 		return userInput, err
 	}
 
-	if *firstName == "" {
+	if userInput.FirstName == "" {
 		return userInput, errors.New("missing -firstName")
 	}
-	if *username == "" {
+	if userInput.Username == "" {
 		return userInput, errors.New("missing -username")
 	}
-	if *imageURL == "" {
+	if userInput.ImageURL == "" {
 		return userInput, errors.New("missing -imageUrl")
-	}
-
-	userInput = usersvc.CreateUserInput{
-		FirstName: *firstName,
-		LastName:  *lastName,
-		Username:  *username,
-		ImageURL:  *imageURL,
 	}
 
 	return userInput, nil
 }
 
 func getGetUserInput(args []string) (uuid.UUID, error) {
-	getUserFlags := flag.NewFlagSet("getUser", flag.ExitOnError)
-	strID := getUserFlags.String("id", "", "User ID")
+	var strID string
 
-	err := getUserFlags.Parse(args)
-	if err != nil {
+	getUserFlags := flag.NewFlagSet("getUser", flag.ExitOnError)
+	getUserFlags.StringVar(&strID, "id", "", "User ID")
+
+	if err := getUserFlags.Parse(args); err != nil {
 		return uuid.Nil, err
 	}
 
-	if *strID == "" {
+	if strID == "" {
 		return uuid.Nil, errors.New("missing -id")
 	}
 
-	id, err := uuid.Parse(*strID)
+	id, err := uuid.Parse(strID)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -96,47 +89,47 @@ func getGetUserInput(args []string) (uuid.UUID, error) {
 	return id, nil
 }
 
-func getCreateChatInput(args []string) ([2]uuid.UUID, error) {
+func getCreateChatInput(args []string) (uuid.UUID, uuid.UUID, error) {
 	createChatFlags := flag.NewFlagSet("createChat", flag.ExitOnError)
 	currID := createChatFlags.String("currentUserID", "", "Current User ID (Required)")
 	otherID := createChatFlags.String("otherUserID", "", "Other User ID (Required)")
 
-	err := createChatFlags.Parse(args)
-	if err != nil {
-		return [2]uuid.UUID{}, err
+	if err := createChatFlags.Parse(args); err != nil {
+		return uuid.Nil, uuid.Nil, err
 	}
 
 	if *currID == "" {
-		return [2]uuid.UUID{}, errors.New("missing -currentUserID")
+		return uuid.Nil, uuid.Nil, errors.New("missing -currentUserID")
 	}
 	if *otherID == "" {
-		return [2]uuid.UUID{}, errors.New("missing -otherUserID")
+		return uuid.Nil, uuid.Nil, errors.New("missing -otherUserID")
 	}
 	pCurrID, err := uuid.Parse(*currID)
 	if err != nil {
-		return [2]uuid.UUID{}, err
+		return uuid.Nil, uuid.Nil, err
 	}
 	pOtherID, err := uuid.Parse(*otherID)
 	if err != nil {
-		return [2]uuid.UUID{}, err
+		return uuid.Nil, uuid.Nil, err
 	}
 
-	return [2]uuid.UUID{pCurrID, pOtherID}, nil
+	return pCurrID, pOtherID, nil
 }
 
 func getUserID(args []string) (uuid.UUID, error) {
-	userIDFlags := flag.NewFlagSet("getUserID", flag.ExitOnError)
-	strID := userIDFlags.String("id", "", "User ID (Required)")
+	var strID string
 
-	err := userIDFlags.Parse(args)
-	if err != nil {
+	userIDFlags := flag.NewFlagSet("getUserID", flag.ExitOnError)
+	userIDFlags.StringVar(&strID, "id", "", "User ID (Required)")
+
+	if err := userIDFlags.Parse(args); err != nil {
 		return uuid.Nil, err
 	}
 
-	if *strID == "" {
+	if strID == "" {
 		return uuid.Nil, errors.New("missing -id")
 	}
-	id, err := uuid.Parse(*strID)
+	id, err := uuid.Parse(strID)
 	if err != nil {
 		return uuid.Nil, err
 	}
@@ -146,13 +139,13 @@ func getUserID(args []string) (uuid.UUID, error) {
 
 func getSendMsgInput(args []string) (msgsvc.MessageInput, error) {
 	var msgInput msgsvc.MessageInput
+
 	msgFlags := flag.NewFlagSet("sendMsg", flag.ExitOnError)
 	strSenderID := msgFlags.String("senderID", "", "Sender ID (Required)")
 	strChatID := msgFlags.String("chatID", "", "ChatID (Required)")
 	cont := msgFlags.String("content", "", "Content (Required)")
 
-	err := msgFlags.Parse(args)
-	if err != nil {
+	if err := msgFlags.Parse(args); err != nil {
 		return msgInput, err
 	}
 
@@ -233,13 +226,13 @@ func main() {
 
 	switch cmd {
 	case "help":
-		fmt.Println(`Commands:
-- create-user
-- get-user
-- create-chat
-- get-chats-by-user
-- send-message
-- get-messages`)
+		fmt.Println("Commands:")
+		fmt.Println("- create-user")
+		fmt.Println("- get-user")
+		fmt.Println("- create-chat")
+		fmt.Println("- get-chats-by-user")
+		fmt.Println("- send-message")
+		fmt.Println("- get-messages")
 		os.Exit(0)
 	case "create-user":
 		userInput, err := getCreateUserInput(os.Args[2:])
@@ -282,11 +275,10 @@ func main() {
 			u.FirstName, u.LastName, u.ImageURL, u.Username,
 		)
 	case "create-chat":
-		ids, err := getCreateChatInput(os.Args[2:])
+		currID, otherID, err := getCreateChatInput(os.Args[2:])
 		if err != nil {
 			log.Fatal(err)
 		}
-		currID, otherID := ids[0], ids[1]
 
 		chatID, err := app.chatSvc.CreateChat(ctx, currID, otherID)
 		if err != nil {

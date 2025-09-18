@@ -18,12 +18,6 @@ type Chat struct {
 	OtherUser   User      `json:"other_user"`
 }
 
-// TODO: Ask if this is wrong todo
-type Data struct {
-	Chats     map[string]*Chat      `json:"chats"`
-	UserChats map[uuid.UUID][]*Chat `json:"user_chats"`
-}
-
 type CreateChatInput struct {
 	ID, CurrentUserID, OtherUserID uuid.UUID
 }

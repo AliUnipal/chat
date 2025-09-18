@@ -61,10 +61,5 @@ func (r *repository) GetUser(_ context.Context, id uuid.UUID) (repo.User, error)
 }
 
 func (r *repository) Close(ctx context.Context) error {
-	err := r.snapper.Snap(ctx, r.users)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	return r.snapper.Snap(ctx, r.users)
 }
