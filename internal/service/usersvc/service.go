@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/models/user"
-	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
+	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/google/uuid"
 	"net/url"
 )
@@ -22,8 +22,8 @@ type userService interface {
 }
 
 type userRepository interface {
-	CreateUser(ctx context.Context, in repo.CreateUserInput) error
-	GetUser(ctx context.Context, id uuid.UUID) (repo.User, error)
+	CreateUser(ctx context.Context, in userrepos.CreateUserInput) error
+	GetUser(ctx context.Context, id uuid.UUID) (userrepos.User, error)
 }
 
 type service struct {
@@ -52,7 +52,7 @@ func (s *service) CreateUser(ctx context.Context, in CreateUserInput) (uuid.UUID
 	}
 
 	userID := uuid.New()
-	if err := s.repo.CreateUser(ctx, repo.CreateUserInput{
+	if err := s.repo.CreateUser(ctx, userrepos.CreateUserInput{
 		ID:        userID,
 		ImageURL:  in.ImageURL,
 		FirstName: in.FirstName,

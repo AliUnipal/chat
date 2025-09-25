@@ -18,6 +18,7 @@ type FileSnapper[T any] struct {
 }
 
 func NewFileSnapper[T any](filename string) *FileSnapper[T] {
+	// TODO: filename and path validation
 	return &FileSnapper[T]{filename: filename}
 }
 
@@ -25,17 +26,14 @@ func (f *FileSnapper[T]) Snap(_ context.Context, data T) error {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 
-	d, err := json.Marshal(data)
+	file, err := os.OpenFile(f.filename, os.O_CREATE|os.O_WRONLY, 0644)
 	if err != nil {
 		return err
 	}
+	defer file.Close()
 
-	err = os.WriteFile(f.filename, d, 0666)
-	if err != nil {
-		return err
-	}
-
-	return nil
+	encoder := json.NewEncoder(file)
+	return encoder.Encode(data)
 }
 
 func (f *FileSnapper[T]) Load(_ context.Context) (T, error) {
@@ -43,13 +41,14 @@ func (f *FileSnapper[T]) Load(_ context.Context) (T, error) {
 	defer f.mu.RUnlock()
 
 	var data T
-	cont, err := os.ReadFile(f.filename)
+	file, err := os.Open(f.filename)
 	if err != nil {
 		return data, err
 	}
+	defer file.Close()
 
-	err = json.Unmarshal(cont, &data)
-	if err != nil {
+	decoder := json.NewDecoder(file)
+	if err := decoder.Decode(&data); err != nil {
 		return data, err
 	}
 

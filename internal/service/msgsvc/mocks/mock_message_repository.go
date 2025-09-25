@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/AliUnipal/chat/internal/service/msgsvc/repo"
+	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,7 +40,7 @@ func (_m *MessageRepository) EXPECT() *MessageRepository_Expecter {
 }
 
 // CreateMessage provides a mock function for the type MessageRepository
-func (_mock *MessageRepository) CreateMessage(ctx context.Context, in repo.CreateMessageInput) error {
+func (_mock *MessageRepository) CreateMessage(ctx context.Context, in msgrepos.CreateMessageInput) error {
 	ret := _mock.Called(ctx, in)
 
 	if len(ret) == 0 {
@@ -48,7 +48,7 @@ func (_mock *MessageRepository) CreateMessage(ctx context.Context, in repo.Creat
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repo.CreateMessageInput) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, msgrepos.CreateMessageInput) error); ok {
 		r0 = returnFunc(ctx, in)
 	} else {
 		r0 = ret.Error(0)
@@ -63,20 +63,20 @@ type MessageRepository_CreateMessage_Call struct {
 
 // CreateMessage is a helper method to define mock.On call
 //   - ctx context.Context
-//   - in repo.CreateMessageInput
+//   - in msgrepos.CreateMessageInput
 func (_e *MessageRepository_Expecter) CreateMessage(ctx interface{}, in interface{}) *MessageRepository_CreateMessage_Call {
 	return &MessageRepository_CreateMessage_Call{Call: _e.mock.On("CreateMessage", ctx, in)}
 }
 
-func (_c *MessageRepository_CreateMessage_Call) Run(run func(ctx context.Context, in repo.CreateMessageInput)) *MessageRepository_CreateMessage_Call {
+func (_c *MessageRepository_CreateMessage_Call) Run(run func(ctx context.Context, in msgrepos.CreateMessageInput)) *MessageRepository_CreateMessage_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repo.CreateMessageInput
+		var arg1 msgrepos.CreateMessageInput
 		if args[1] != nil {
-			arg1 = args[1].(repo.CreateMessageInput)
+			arg1 = args[1].(msgrepos.CreateMessageInput)
 		}
 		run(
 			arg0,
@@ -91,29 +91,29 @@ func (_c *MessageRepository_CreateMessage_Call) Return(err error) *MessageReposi
 	return _c
 }
 
-func (_c *MessageRepository_CreateMessage_Call) RunAndReturn(run func(ctx context.Context, in repo.CreateMessageInput) error) *MessageRepository_CreateMessage_Call {
+func (_c *MessageRepository_CreateMessage_Call) RunAndReturn(run func(ctx context.Context, in msgrepos.CreateMessageInput) error) *MessageRepository_CreateMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetMessages provides a mock function for the type MessageRepository
-func (_mock *MessageRepository) GetMessages(ctx context.Context, chatID uuid.UUID) ([]repo.Message, error) {
+func (_mock *MessageRepository) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Message, error) {
 	ret := _mock.Called(ctx, chatID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetMessages")
 	}
 
-	var r0 []repo.Message
+	var r0 []msgrepos.Message
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]repo.Message, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]msgrepos.Message, error)); ok {
 		return returnFunc(ctx, chatID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []repo.Message); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []msgrepos.Message); ok {
 		r0 = returnFunc(ctx, chatID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]repo.Message)
+			r0 = ret.Get(0).([]msgrepos.Message)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
@@ -154,12 +154,12 @@ func (_c *MessageRepository_GetMessages_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *MessageRepository_GetMessages_Call) Return(messages []repo.Message, err error) *MessageRepository_GetMessages_Call {
+func (_c *MessageRepository_GetMessages_Call) Return(messages []msgrepos.Message, err error) *MessageRepository_GetMessages_Call {
 	_c.Call.Return(messages, err)
 	return _c
 }
 
-func (_c *MessageRepository_GetMessages_Call) RunAndReturn(run func(ctx context.Context, chatID uuid.UUID) ([]repo.Message, error)) *MessageRepository_GetMessages_Call {
+func (_c *MessageRepository_GetMessages_Call) RunAndReturn(run func(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Message, error)) *MessageRepository_GetMessages_Call {
 	_c.Call.Return(run)
 	return _c
 }

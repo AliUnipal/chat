@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/models/message"
-	"github.com/AliUnipal/chat/internal/service/msgsvc/repo"
+	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
 	"time"
 )
@@ -23,8 +23,8 @@ type messageService interface {
 }
 
 type messageRepository interface {
-	CreateMessage(ctx context.Context, in repo.CreateMessageInput) error
-	GetMessages(ctx context.Context, chatID uuid.UUID) ([]repo.Message, error)
+	CreateMessage(ctx context.Context, in msgrepos.CreateMessageInput) error
+	GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Message, error)
 }
 
 type service struct {
@@ -50,7 +50,7 @@ func (s *service) CreateMessage(ctx context.Context, in MessageInput) (uuid.UUID
 
 	id := uuid.New()
 
-	if err := s.repo.CreateMessage(ctx, repo.CreateMessageInput{
+	if err := s.repo.CreateMessage(ctx, msgrepos.CreateMessageInput{
 		ID:          id,
 		SenderID:    in.SenderID,
 		ChatID:      in.ChatID,

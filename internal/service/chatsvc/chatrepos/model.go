@@ -1,9 +1,10 @@
-package repo
+package chatrepos
 
 import (
 	"github.com/google/uuid"
 )
 
+// TODO: remove JSONs
 type User struct {
 	ID        uuid.UUID `json:"id"`
 	ImageURL  string    `json:"image_url"`
@@ -20,4 +21,9 @@ type Chat struct {
 
 type CreateChatInput struct {
 	ID, CurrentUserID, OtherUserID uuid.UUID
+}
+
+type Data struct {
+	Chats     map[string]*Chat      `json:"chats"`
+	UserChats map[uuid.UUID][]*Chat `json:"user_chats"`
 }

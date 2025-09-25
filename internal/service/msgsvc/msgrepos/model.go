@@ -1,10 +1,18 @@
-package repo
+package msgrepos
 
 import (
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/google/uuid"
 	"time"
 )
+
+type User struct {
+	ID        uuid.UUID `json:"id"`
+	ImageURL  string    `json:"image_url"`
+	FirstName string    `json:"first_name"`
+	LastName  string    `json:"last_name"`
+	Username  string    `json:"username"`
+}
 
 type Message struct {
 	ID          uuid.UUID           `json:"id"`
@@ -23,3 +31,11 @@ type CreateMessageInput struct {
 	ContentType message.ContentType
 	Timestamp   time.Time
 }
+
+type Chat struct {
+	ID          uuid.UUID `json:"id"`
+	CurrentUser User      `json:"current_user"`
+	OtherUser   User      `json:"other_user"`
+}
+
+type Data = map[uuid.UUID][]Message

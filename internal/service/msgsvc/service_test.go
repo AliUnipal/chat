@@ -6,7 +6,7 @@ import (
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/service/msgsvc"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/mocks"
-	"github.com/AliUnipal/chat/internal/service/msgsvc/repo"
+	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -23,7 +23,7 @@ func TestCreateMessage_ReturnID(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewMessageRepository(t)
-	mockRepo.EXPECT().CreateMessage(mock.Anything, mock.MatchedBy(func(r repo.CreateMessageInput) bool {
+	mockRepo.EXPECT().CreateMessage(mock.Anything, mock.MatchedBy(func(r msgrepos.CreateMessageInput) bool {
 		return r.ID != uuid.Nil &&
 			r.SenderID == input.SenderID &&
 			r.ChatID == input.ChatID &&
@@ -103,7 +103,7 @@ func TestCreateMessage_ReturnError(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewMessageRepository(t)
-	mockRepo.EXPECT().CreateMessage(mock.Anything, mock.MatchedBy(func(r repo.CreateMessageInput) bool {
+	mockRepo.EXPECT().CreateMessage(mock.Anything, mock.MatchedBy(func(r msgrepos.CreateMessageInput) bool {
 		return r.ID != uuid.Nil &&
 			r.SenderID == input.SenderID &&
 			r.ChatID == input.ChatID &&
@@ -146,9 +146,9 @@ func TestGetMessages_ReturnMessages(t *testing.T) {
 			Timestamp:   time.Date(2009, time.November, 17, 23, 0, 0, 0, time.UTC),
 		},
 	}
-	repoExpectedMessage := make([]repo.Message, len(expectedMessages))
+	repoExpectedMessage := make([]msgrepos.Message, len(expectedMessages))
 	for i, msg := range expectedMessages {
-		repoExpectedMessage[i] = repo.Message{
+		repoExpectedMessage[i] = msgrepos.Message{
 			ID:          msg.ID,
 			SenderID:    msg.SenderID,
 			ChatID:      msg.ChatID,

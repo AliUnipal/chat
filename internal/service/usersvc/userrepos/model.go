@@ -1,4 +1,4 @@
-package repo
+package userrepos
 
 import "github.com/google/uuid"
 
@@ -17,3 +17,5 @@ type CreateUserInput struct {
 	LastName  string
 	Username  string
 }
+
+type Data = map[uuid.UUID]User

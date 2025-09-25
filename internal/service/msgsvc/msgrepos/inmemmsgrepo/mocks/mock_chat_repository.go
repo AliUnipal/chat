@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
+	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,23 +40,23 @@ func (_m *ChatRepository) EXPECT() *ChatRepository_Expecter {
 }
 
 // GetChat provides a mock function for the type ChatRepository
-func (_mock *ChatRepository) GetChat(ctx context.Context, id uuid.UUID) (*repo.Chat, error) {
+func (_mock *ChatRepository) GetChat(ctx context.Context, id uuid.UUID) (*msgrepos.Chat, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetChat")
 	}
 
-	var r0 *repo.Chat
+	var r0 *msgrepos.Chat
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*repo.Chat, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (*msgrepos.Chat, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *repo.Chat); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) *msgrepos.Chat); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).(*repo.Chat)
+			r0 = ret.Get(0).(*msgrepos.Chat)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
@@ -97,12 +97,12 @@ func (_c *ChatRepository_GetChat_Call) Run(run func(ctx context.Context, id uuid
 	return _c
 }
 
-func (_c *ChatRepository_GetChat_Call) Return(chat *repo.Chat, err error) *ChatRepository_GetChat_Call {
+func (_c *ChatRepository_GetChat_Call) Return(chat *msgrepos.Chat, err error) *ChatRepository_GetChat_Call {
 	_c.Call.Return(chat, err)
 	return _c
 }
 
-func (_c *ChatRepository_GetChat_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*repo.Chat, error)) *ChatRepository_GetChat_Call {
+func (_c *ChatRepository_GetChat_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (*msgrepos.Chat, error)) *ChatRepository_GetChat_Call {
 	_c.Call.Return(run)
 	return _c
 }

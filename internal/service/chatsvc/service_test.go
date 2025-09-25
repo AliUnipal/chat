@@ -3,8 +3,8 @@ package chatsvc_test
 import (
 	"errors"
 	"github.com/AliUnipal/chat/internal/service/chatsvc"
+	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos"
 	"github.com/AliUnipal/chat/internal/service/chatsvc/mocks"
-	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -16,17 +16,17 @@ func TestGetChats_ReturnChats(t *testing.T) {
 	ctx := t.Context()
 	userID := uuid.New()
 	otherUserOneID := uuid.New()
-	expectedChats := []*repo.Chat{
-		&repo.Chat{
+	expectedChats := []*chatrepos.Chat{
+		&chatrepos.Chat{
 			ID: userID,
-			CurrentUser: repo.User{
+			CurrentUser: chatrepos.User{
 				ID:        userID,
 				ImageURL:  "",
 				FirstName: "",
 				LastName:  "",
 				Username:  "",
 			},
-			OtherUser: repo.User{
+			OtherUser: chatrepos.User{
 				ID:        otherUserOneID,
 				ImageURL:  "",
 				FirstName: "",
@@ -34,16 +34,16 @@ func TestGetChats_ReturnChats(t *testing.T) {
 				Username:  "",
 			},
 		},
-		&repo.Chat{
+		&chatrepos.Chat{
 			ID: userID,
-			CurrentUser: repo.User{
+			CurrentUser: chatrepos.User{
 				ID:        userID,
 				ImageURL:  "",
 				FirstName: "",
 				LastName:  "",
 				Username:  "",
 			},
-			OtherUser: repo.User{
+			OtherUser: chatrepos.User{
 				ID:        uuid.UUID{},
 				ImageURL:  "",
 				FirstName: "",
@@ -92,7 +92,7 @@ func TestCreateChat_ReturnID(t *testing.T) {
 	otherUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == otherUserID
@@ -114,7 +114,7 @@ func TestCreateChat_ReturnErrorOnEmptyUserOne(t *testing.T) {
 	otherUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == uuid.Nil &&
 			c.OtherUserID == otherUserID
@@ -132,7 +132,7 @@ func TestCreateChat_ReturnErrorOnEmptyUserTwo(t *testing.T) {
 	currentUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == uuid.Nil
@@ -150,7 +150,7 @@ func TestCreateChat_ReturnErrorOnIdenticalIDs(t *testing.T) {
 	currentUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == currentUserID
@@ -169,7 +169,7 @@ func TestCreateChat_ReturnError(t *testing.T) {
 	otherUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == otherUserID

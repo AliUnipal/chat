@@ -5,7 +5,7 @@ import (
 	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/service/usersvc"
 	"github.com/AliUnipal/chat/internal/service/usersvc/mocks"
-	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
+	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -21,7 +21,7 @@ func TestCreateUser_ReturnID(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().CreateUser(mock.Anything, mock.MatchedBy(func(u repo.CreateUserInput) bool {
+	mockRepo.EXPECT().CreateUser(mock.Anything, mock.MatchedBy(func(u userrepos.CreateUserInput) bool {
 		return u.ID != uuid.Nil &&
 			u.FirstName == userInput.FirstName &&
 			u.LastName == userInput.LastName &&
@@ -137,7 +137,7 @@ func TestGetUser_ReturnUser(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().GetUser(ctx, userID).Return(repo.User{
+	mockRepo.EXPECT().GetUser(ctx, userID).Return(userrepos.User{
 		ID:        expectedUser.ID,
 		ImageURL:  expectedUser.ImageURL,
 		FirstName: expectedUser.FirstName,
