@@ -261,6 +261,10 @@ func Test_GetChatsByUserReturnChats(t *testing.T) {
 		t.Fatalf("expected no error but got %v", err)
 	}
 
+	if len(cs) != len(expectedChats) {
+		t.Fatalf("expected %d chats, got %d", len(expectedChats), len(cs))
+	}
+
 	for i, c := range cs {
 		ec := expectedChats[i]
 		if !reflect.DeepEqual(ec, c) {
@@ -316,6 +320,58 @@ func Test_GetChatsByUserReturnErrorOnSnapper(t *testing.T) {
 
 	repo := inmemchatrepo.New(mockSnapper, mockUserRepo)
 	if _, err := repo.GetChatsByUser(ctx, uID); err == nil {
+		t.Fatalf("expected error but got nil")
+	}
+}
+
+func Test_Close(t *testing.T) {
+	ctx := context.Background()
+
+	mockSnapper := mocks.NewSnapper(t)
+	mockSnapper.EXPECT().Snap(mock.Anything, mock.Anything).Return(nil)
+	mockUserRepo := mocks.NewUserRepository(t)
+
+	repo := inmemchatrepo.New(mockSnapper, mockUserRepo)
+	if err := repo.Close(ctx); err != nil {
+		t.Fatalf("expected no error but got %v", err)
+	}
+}
+
+func Test_CloseReturnError(t *testing.T) {
+	ctx := context.Background()
+
+	mockSnapper := mocks.NewSnapper(t)
+	mockSnapper.EXPECT().Snap(mock.Anything, mock.Anything).Return(errors.New("error"))
+	mockUserRepo := mocks.NewUserRepository(t)
+
+	repo := inmemchatrepo.New(mockSnapper, mockUserRepo)
+	if err := repo.Close(ctx); err == nil {
+		t.Fatalf("expected error but got nil")
+	}
+}
+
+func Test_Load(t *testing.T) {
+	ctx := context.Background()
+
+	mockSnapper := mocks.NewSnapper(t)
+	mockSnapper.EXPECT().Load(mock.Anything).Return(chatrepos.Data{}, nil)
+	mockUserRepo := mocks.NewUserRepository(t)
+
+	repo := inmemchatrepo.New(mockSnapper, mockUserRepo)
+	if err := repo.Load(ctx); err != nil {
+		t.Fatalf("expected no error but got %v", err)
+	}
+}
+
+func Test_LoadReturnError(t *testing.T) {
+	ctx := context.Background()
+
+	mockSnapper := mocks.NewSnapper(t)
+	mockSnapper.EXPECT().Load(mock.Anything).Return(chatrepos.Data{}, errors.New("error"))
+	mockUserRepo := mocks.NewUserRepository(t)
+
+	repo := inmemchatrepo.New(mockSnapper, mockUserRepo)
+	if err := repo.Load(ctx); err == nil {
 		t.Fatalf("expected error but got nil")
 	}
 }
