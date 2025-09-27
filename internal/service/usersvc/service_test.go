@@ -1,19 +1,18 @@
 package usersvc_test
 
 import (
-	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/service/usersvc"
 	"github.com/AliUnipal/chat/internal/service/usersvc/mocks"
-	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
+	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"testing"
 )
 
 func TestCreateUser_ReturnID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "https://test.png",
 		FirstName: "First CreateUserInput",
@@ -22,7 +21,7 @@ func TestCreateUser_ReturnID(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().CreateUser(mock.Anything, mock.MatchedBy(func(u repo.CreateUserInput) bool {
+	mockRepo.EXPECT().CreateUser(mock.Anything, mock.MatchedBy(func(u userrepos.CreateUserInput) bool {
 		return u.ID != uuid.Nil &&
 			u.FirstName == userInput.FirstName &&
 			u.LastName == userInput.LastName &&
@@ -42,7 +41,7 @@ func TestCreateUser_ReturnID(t *testing.T) {
 }
 
 func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL: "https://test.png",
 		LastName: "Last Name",
@@ -58,7 +57,7 @@ func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 }
 
 func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "https://test.png",
 		FirstName: "First Name",
@@ -73,8 +72,25 @@ func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 	}
 }
 
+func TestCreateUser_ReturnErrorOnEmptyImageURL(t *testing.T) {
+	ctx := t.Context()
+	userInput := usersvc.CreateUserInput{
+		ImageURL:  "",
+		FirstName: "First Name",
+		LastName:  "Last Name",
+		Username:  "+97312345678",
+	}
+
+	mockRepo := mocks.NewUserRepository(t)
+	service := usersvc.NewService(mockRepo)
+
+	if _, err := service.CreateUser(ctx, userInput); err == nil {
+		t.Fatalf("Expected error got %v", err)
+	}
+}
+
 func TestCreateUser_ReturnErrorOnInvalidImageURL(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "/test.png",
 		FirstName: "First Name",
@@ -91,7 +107,7 @@ func TestCreateUser_ReturnErrorOnInvalidImageURL(t *testing.T) {
 }
 
 func TestCreateUser_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userInput := usersvc.CreateUserInput{
 		ImageURL:  "https://test.png",
 		FirstName: "First Name",
@@ -110,7 +126,7 @@ func TestCreateUser_ReturnError(t *testing.T) {
 }
 
 func TestGetUser_ReturnUser(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userID := uuid.New()
 	expectedUser := user.User{
 		ID:        userID,
@@ -121,7 +137,7 @@ func TestGetUser_ReturnUser(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	mockRepo.EXPECT().GetUser(ctx, userID).Return(repo.CreateUserInput{
+	mockRepo.EXPECT().GetUser(ctx, userID).Return(userrepos.User{
 		ID:        expectedUser.ID,
 		ImageURL:  expectedUser.ImageURL,
 		FirstName: expectedUser.FirstName,

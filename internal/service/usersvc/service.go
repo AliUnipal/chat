@@ -4,7 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/models/user"
-	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
+	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/google/uuid"
 	"net/url"
 )
@@ -22,8 +22,8 @@ type userService interface {
 }
 
 type userRepository interface {
-	CreateUser(ctx context.Context, in repo.CreateUserInput) error
-	GetUser(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error)
+	CreateUser(ctx context.Context, in userrepos.CreateUserInput) error
+	GetUser(ctx context.Context, id uuid.UUID) (userrepos.User, error)
 }
 
 type service struct {
@@ -43,13 +43,16 @@ func (s *service) CreateUser(ctx context.Context, in CreateUserInput) (uuid.UUID
 	if in.Username == "" {
 		return uuid.Nil, errors.New("username is required")
 	}
+	if in.ImageURL == "" {
+		return uuid.Nil, errors.New("image url is required")
+	}
 	u, err := url.ParseRequestURI(in.ImageURL)
 	if err != nil || u == nil || u.Scheme == "" || u.Host == "" {
 		return uuid.Nil, errors.New("image url is invalid")
 	}
 
 	userID := uuid.New()
-	if err := s.repo.CreateUser(ctx, repo.CreateUserInput{
+	if err := s.repo.CreateUser(ctx, userrepos.CreateUserInput{
 		ID:        userID,
 		ImageURL:  in.ImageURL,
 		FirstName: in.FirstName,

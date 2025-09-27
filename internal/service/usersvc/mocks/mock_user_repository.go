@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
+	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,7 +40,7 @@ func (_m *UserRepository) EXPECT() *UserRepository_Expecter {
 }
 
 // CreateUser provides a mock function for the type UserRepository
-func (_mock *UserRepository) CreateUser(ctx context.Context, in repo.CreateUserInput) error {
+func (_mock *UserRepository) CreateUser(ctx context.Context, in userrepos.CreateUserInput) error {
 	ret := _mock.Called(ctx, in)
 
 	if len(ret) == 0 {
@@ -48,7 +48,7 @@ func (_mock *UserRepository) CreateUser(ctx context.Context, in repo.CreateUserI
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repo.CreateUserInput) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, userrepos.CreateUserInput) error); ok {
 		r0 = returnFunc(ctx, in)
 	} else {
 		r0 = ret.Error(0)
@@ -63,20 +63,20 @@ type UserRepository_CreateUser_Call struct {
 
 // CreateUser is a helper method to define mock.On call
 //   - ctx context.Context
-//   - in repo.CreateUserInput
+//   - in userrepos.CreateUserInput
 func (_e *UserRepository_Expecter) CreateUser(ctx interface{}, in interface{}) *UserRepository_CreateUser_Call {
 	return &UserRepository_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, in)}
 }
 
-func (_c *UserRepository_CreateUser_Call) Run(run func(ctx context.Context, in repo.CreateUserInput)) *UserRepository_CreateUser_Call {
+func (_c *UserRepository_CreateUser_Call) Run(run func(ctx context.Context, in userrepos.CreateUserInput)) *UserRepository_CreateUser_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repo.CreateUserInput
+		var arg1 userrepos.CreateUserInput
 		if args[1] != nil {
-			arg1 = args[1].(repo.CreateUserInput)
+			arg1 = args[1].(userrepos.CreateUserInput)
 		}
 		run(
 			arg0,
@@ -91,28 +91,28 @@ func (_c *UserRepository_CreateUser_Call) Return(err error) *UserRepository_Crea
 	return _c
 }
 
-func (_c *UserRepository_CreateUser_Call) RunAndReturn(run func(ctx context.Context, in repo.CreateUserInput) error) *UserRepository_CreateUser_Call {
+func (_c *UserRepository_CreateUser_Call) RunAndReturn(run func(ctx context.Context, in userrepos.CreateUserInput) error) *UserRepository_CreateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetUser provides a mock function for the type UserRepository
-func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error) {
+func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (userrepos.User, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUser")
 	}
 
-	var r0 repo.CreateUserInput
+	var r0 userrepos.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (repo.CreateUserInput, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (userrepos.User, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) repo.CreateUserInput); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) userrepos.User); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
-		r0 = ret.Get(0).(repo.CreateUserInput)
+		r0 = ret.Get(0).(userrepos.User)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
 		r1 = returnFunc(ctx, id)
@@ -152,12 +152,12 @@ func (_c *UserRepository_GetUser_Call) Run(run func(ctx context.Context, id uuid
 	return _c
 }
 
-func (_c *UserRepository_GetUser_Call) Return(createUserInput repo.CreateUserInput, err error) *UserRepository_GetUser_Call {
-	_c.Call.Return(createUserInput, err)
+func (_c *UserRepository_GetUser_Call) Return(user userrepos.User, err error) *UserRepository_GetUser_Call {
+	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error)) *UserRepository_GetUser_Call {
+func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (userrepos.User, error)) *UserRepository_GetUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
