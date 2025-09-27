@@ -20,6 +20,10 @@ type userRepository interface {
 
 func New(s snapper, userRepo userRepository) *repository {
 	return &repository{
+		data: chatrepos.Data{
+			Chats:     map[string]*chatrepos.Chat{},
+			UserChats: map[uuid.UUID][]*chatrepos.Chat{},
+		},
 		userRepo: userRepo,
 		snapper:  s,
 	}
@@ -34,7 +38,9 @@ type repository struct {
 
 func (r *repository) CreateChat(ctx context.Context, in chatrepos.CreateChatInput) error {
 	if !r.isLoaded {
-		return r.Load(ctx)
+		if err := r.Load(ctx); err != nil {
+			return err
+		}
 	}
 
 	ids := []string{in.CurrentUserID.String(), in.OtherUserID.String()}
@@ -42,9 +48,6 @@ func (r *repository) CreateChat(ctx context.Context, in chatrepos.CreateChatInpu
 	id := strings.Join(ids, "|")
 	if _, ok := r.data.Chats[id]; ok {
 		return errors.New("chat already exists")
-	}
-	if in.CurrentUserID == in.OtherUserID {
-		return errors.New("user ids are matching, you cannot create a chat with yourself!")
 	}
 
 	cu, err := r.userRepo.GetUser(ctx, in.CurrentUserID)
@@ -76,7 +79,9 @@ func (r *repository) CreateChat(ctx context.Context, in chatrepos.CreateChatInpu
 
 func (r *repository) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatrepos.Chat, error) {
 	if !r.isLoaded {
-		return nil, r.Load(ctx)
+		if err := r.Load(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	_, err := r.userRepo.GetUser(ctx, userID)
@@ -84,12 +89,19 @@ func (r *repository) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*c
 		return nil, err
 	}
 
-	return r.data.UserChats[userID], nil
+	chats := r.data.UserChats[userID]
+	if len(chats) == 0 {
+		return nil, errors.New("no chat found")
+	}
+
+	return chats, nil
 }
 
 func (r *repository) GetChat(ctx context.Context, id uuid.UUID) (*chatrepos.Chat, error) {
 	if !r.isLoaded {
-		return nil, r.Load(ctx)
+		if err := r.Load(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	for _, chat := range r.data.Chats {
@@ -107,8 +119,10 @@ func (r *repository) Load(ctx context.Context) error {
 		return err
 	}
 
-	r.data.UserChats = data.UserChats
-	r.data.Chats = data.Chats
+	if data.Chats != nil && data.UserChats != nil {
+		r.data.UserChats = data.UserChats
+		r.data.Chats = data.Chats
+	}
 
 	return nil
 }

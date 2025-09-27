@@ -32,7 +32,9 @@ type repository struct {
 
 func (r *repository) CreateMessage(ctx context.Context, in msgrepos.CreateMessageInput) error {
 	if !r.isLoaded {
-		return r.Load(ctx)
+		if err := r.Load(ctx); err != nil {
+			return err
+		}
 	}
 
 	c, err := r.chatRepo.GetChat(ctx, in.ChatID)
@@ -57,7 +59,9 @@ func (r *repository) CreateMessage(ctx context.Context, in msgrepos.CreateMessag
 
 func (r *repository) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Message, error) {
 	if !r.isLoaded {
-		return nil, r.Load(ctx)
+		if err := r.Load(ctx); err != nil {
+			return nil, err
+		}
 	}
 
 	msgs, ok := r.messages[chatID]

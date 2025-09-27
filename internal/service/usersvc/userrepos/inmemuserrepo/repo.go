@@ -24,7 +24,9 @@ type repository struct {
 
 func (r *repository) CreateUser(ctx context.Context, in userrepos.CreateUserInput) error {
 	if !r.isLoaded {
-		return r.Load(ctx)
+		if err := r.Load(ctx); err != nil {
+			return err
+		}
 	}
 
 	if _, ok := r.users[in.ID]; ok {
@@ -46,7 +48,9 @@ func (r *repository) CreateUser(ctx context.Context, in userrepos.CreateUserInpu
 
 func (r *repository) GetUser(ctx context.Context, id uuid.UUID) (userrepos.User, error) {
 	if !r.isLoaded {
-		return userrepos.User{}, r.Load(ctx)
+		if err := r.Load(ctx); err != nil {
+			return userrepos.User{}, err
+		}
 	}
 
 	user, ok := r.users[id]
