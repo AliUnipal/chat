@@ -32,6 +32,7 @@ func (r *repository) CreateUser(ctx context.Context, in userrepos.CreateUserInpu
 	if _, ok := r.users[in.ID]; ok {
 		return errors.New("user already exists")
 	}
+
 	if in.ID == uuid.Nil {
 		return errors.New("user id is required")
 	}
