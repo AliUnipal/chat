@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/AliUnipal/chat/internal/service/usersvc/repo"
+	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,22 +40,22 @@ func (_m *UserRepository) EXPECT() *UserRepository_Expecter {
 }
 
 // GetUser provides a mock function for the type UserRepository
-func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error) {
+func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (chatrepos.User, error) {
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetUser")
 	}
 
-	var r0 repo.CreateUserInput
+	var r0 chatrepos.User
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (repo.CreateUserInput, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) (chatrepos.User, error)); ok {
 		return returnFunc(ctx, id)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) repo.CreateUserInput); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) chatrepos.User); ok {
 		r0 = returnFunc(ctx, id)
 	} else {
-		r0 = ret.Get(0).(repo.CreateUserInput)
+		r0 = ret.Get(0).(chatrepos.User)
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
 		r1 = returnFunc(ctx, id)
@@ -95,12 +95,12 @@ func (_c *UserRepository_GetUser_Call) Run(run func(ctx context.Context, id uuid
 	return _c
 }
 
-func (_c *UserRepository_GetUser_Call) Return(createUserInput repo.CreateUserInput, err error) *UserRepository_GetUser_Call {
-	_c.Call.Return(createUserInput, err)
+func (_c *UserRepository_GetUser_Call) Return(user chatrepos.User, err error) *UserRepository_GetUser_Call {
+	_c.Call.Return(user, err)
 	return _c
 }
 
-func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (repo.CreateUserInput, error)) *UserRepository_GetUser_Call {
+func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context, id uuid.UUID) (chatrepos.User, error)) *UserRepository_GetUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

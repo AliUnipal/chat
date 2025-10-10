@@ -1,11 +1,10 @@
 package chatsvc_test
 
 import (
-	"context"
 	"errors"
 	"github.com/AliUnipal/chat/internal/service/chatsvc"
+	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos"
 	"github.com/AliUnipal/chat/internal/service/chatsvc/mocks"
-	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"testing"
@@ -14,45 +13,43 @@ import (
 // AAA - Arrange Act Assert
 
 func TestGetChats_ReturnChats(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userID := uuid.New()
 	otherUserOneID := uuid.New()
-	expectedChats := []*repo.Chat{
-		&repo.Chat{
+	expectedChats := []*chatrepos.Chat{
+		&chatrepos.Chat{
 			ID: userID,
-			CurrentUser: repo.User{
+			CurrentUser: chatrepos.User{
 				ID:        userID,
 				ImageURL:  "",
 				FirstName: "",
 				LastName:  "",
 				Username:  "",
 			},
-			OtherUser: repo.User{
+			OtherUser: chatrepos.User{
 				ID:        otherUserOneID,
 				ImageURL:  "",
 				FirstName: "",
 				LastName:  "",
 				Username:  "",
 			},
-			Messages: nil,
 		},
-		&repo.Chat{
+		&chatrepos.Chat{
 			ID: userID,
-			CurrentUser: repo.User{
+			CurrentUser: chatrepos.User{
 				ID:        userID,
 				ImageURL:  "",
 				FirstName: "",
 				LastName:  "",
 				Username:  "",
 			},
-			OtherUser: repo.User{
+			OtherUser: chatrepos.User{
 				ID:        uuid.UUID{},
 				ImageURL:  "",
 				FirstName: "",
 				LastName:  "",
 				Username:  "",
 			},
-			Messages: nil,
 		},
 	}
 
@@ -77,7 +74,7 @@ func TestGetChats_ReturnChats(t *testing.T) {
 }
 
 func TestGetChats_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	userID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
@@ -90,12 +87,12 @@ func TestGetChats_ReturnError(t *testing.T) {
 }
 
 func TestCreateChat_ReturnID(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	currentUserID := uuid.New()
 	otherUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == otherUserID
@@ -113,11 +110,11 @@ func TestCreateChat_ReturnID(t *testing.T) {
 }
 
 func TestCreateChat_ReturnErrorOnEmptyUserOne(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	otherUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == uuid.Nil &&
 			c.OtherUserID == otherUserID
@@ -131,11 +128,11 @@ func TestCreateChat_ReturnErrorOnEmptyUserOne(t *testing.T) {
 }
 
 func TestCreateChat_ReturnErrorOnEmptyUserTwo(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	currentUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == uuid.Nil
@@ -148,13 +145,31 @@ func TestCreateChat_ReturnErrorOnEmptyUserTwo(t *testing.T) {
 	}
 }
 
+func TestCreateChat_ReturnErrorOnIdenticalIDs(t *testing.T) {
+	ctx := t.Context()
+	currentUserID := uuid.New()
+
+	chatMockRepo := mocks.NewChatRepository(t)
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
+		return c.ID != uuid.Nil &&
+			c.CurrentUserID == currentUserID &&
+			c.OtherUserID == currentUserID
+	})).Return(errors.New("error"))
+
+	service := chatsvc.NewService(chatMockRepo)
+
+	if _, err := service.CreateChat(ctx, currentUserID, currentUserID); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
 func TestCreateChat_ReturnError(t *testing.T) {
-	ctx := context.Background()
+	ctx := t.Context()
 	currentUserID := uuid.New()
 	otherUserID := uuid.New()
 
 	chatMockRepo := mocks.NewChatRepository(t)
-	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c repo.CreateChatInput) bool {
+	chatMockRepo.EXPECT().CreateChat(mock.Anything, mock.MatchedBy(func(c chatrepos.CreateChatInput) bool {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == otherUserID

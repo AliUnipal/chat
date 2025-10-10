@@ -7,7 +7,7 @@ package mocks
 import (
 	"context"
 
-	"github.com/AliUnipal/chat/internal/service/chatsvc/repo"
+	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos"
 	"github.com/google/uuid"
 	mock "github.com/stretchr/testify/mock"
 )
@@ -40,7 +40,7 @@ func (_m *ChatRepository) EXPECT() *ChatRepository_Expecter {
 }
 
 // CreateChat provides a mock function for the type ChatRepository
-func (_mock *ChatRepository) CreateChat(ctx context.Context, chat repo.CreateChatInput) error {
+func (_mock *ChatRepository) CreateChat(ctx context.Context, chat chatrepos.CreateChatInput) error {
 	ret := _mock.Called(ctx, chat)
 
 	if len(ret) == 0 {
@@ -48,7 +48,7 @@ func (_mock *ChatRepository) CreateChat(ctx context.Context, chat repo.CreateCha
 	}
 
 	var r0 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, repo.CreateChatInput) error); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, chatrepos.CreateChatInput) error); ok {
 		r0 = returnFunc(ctx, chat)
 	} else {
 		r0 = ret.Error(0)
@@ -63,20 +63,20 @@ type ChatRepository_CreateChat_Call struct {
 
 // CreateChat is a helper method to define mock.On call
 //   - ctx context.Context
-//   - chat repo.CreateChatInput
+//   - chat chatrepos.CreateChatInput
 func (_e *ChatRepository_Expecter) CreateChat(ctx interface{}, chat interface{}) *ChatRepository_CreateChat_Call {
 	return &ChatRepository_CreateChat_Call{Call: _e.mock.On("CreateChat", ctx, chat)}
 }
 
-func (_c *ChatRepository_CreateChat_Call) Run(run func(ctx context.Context, chat repo.CreateChatInput)) *ChatRepository_CreateChat_Call {
+func (_c *ChatRepository_CreateChat_Call) Run(run func(ctx context.Context, chat chatrepos.CreateChatInput)) *ChatRepository_CreateChat_Call {
 	_c.Call.Run(func(args mock.Arguments) {
 		var arg0 context.Context
 		if args[0] != nil {
 			arg0 = args[0].(context.Context)
 		}
-		var arg1 repo.CreateChatInput
+		var arg1 chatrepos.CreateChatInput
 		if args[1] != nil {
-			arg1 = args[1].(repo.CreateChatInput)
+			arg1 = args[1].(chatrepos.CreateChatInput)
 		}
 		run(
 			arg0,
@@ -91,29 +91,29 @@ func (_c *ChatRepository_CreateChat_Call) Return(err error) *ChatRepository_Crea
 	return _c
 }
 
-func (_c *ChatRepository_CreateChat_Call) RunAndReturn(run func(ctx context.Context, chat repo.CreateChatInput) error) *ChatRepository_CreateChat_Call {
+func (_c *ChatRepository_CreateChat_Call) RunAndReturn(run func(ctx context.Context, chat chatrepos.CreateChatInput) error) *ChatRepository_CreateChat_Call {
 	_c.Call.Return(run)
 	return _c
 }
 
 // GetChatsByUser provides a mock function for the type ChatRepository
-func (_mock *ChatRepository) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*repo.Chat, error) {
+func (_mock *ChatRepository) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatrepos.Chat, error) {
 	ret := _mock.Called(ctx, userID)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetChatsByUser")
 	}
 
-	var r0 []*repo.Chat
+	var r0 []*chatrepos.Chat
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*repo.Chat, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) ([]*chatrepos.Chat, error)); ok {
 		return returnFunc(ctx, userID)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*repo.Chat); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, uuid.UUID) []*chatrepos.Chat); ok {
 		r0 = returnFunc(ctx, userID)
 	} else {
 		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]*repo.Chat)
+			r0 = ret.Get(0).([]*chatrepos.Chat)
 		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, uuid.UUID) error); ok {
@@ -154,12 +154,12 @@ func (_c *ChatRepository_GetChatsByUser_Call) Run(run func(ctx context.Context, 
 	return _c
 }
 
-func (_c *ChatRepository_GetChatsByUser_Call) Return(chats []*repo.Chat, err error) *ChatRepository_GetChatsByUser_Call {
+func (_c *ChatRepository_GetChatsByUser_Call) Return(chats []*chatrepos.Chat, err error) *ChatRepository_GetChatsByUser_Call {
 	_c.Call.Return(chats, err)
 	return _c
 }
 
-func (_c *ChatRepository_GetChatsByUser_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]*repo.Chat, error)) *ChatRepository_GetChatsByUser_Call {
+func (_c *ChatRepository_GetChatsByUser_Call) RunAndReturn(run func(ctx context.Context, userID uuid.UUID) ([]*chatrepos.Chat, error)) *ChatRepository_GetChatsByUser_Call {
 	_c.Call.Return(run)
 	return _c
 }
