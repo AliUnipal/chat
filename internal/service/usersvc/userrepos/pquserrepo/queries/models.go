@@ -12,11 +12,11 @@ import (
 )
 
 type User struct {
-	ID        uuid.UUID      `db:"id"`
-	ImageUrl  sql.NullString `db:"image_url"`
-	FirstName string         `db:"first_name"`
-	LastName  sql.NullString `db:"last_name"`
-	Username  string         `db:"username"`
-	CreatedAt time.Time      `db:"created_at"`
-	UpdatedAt time.Time      `db:"updated_at"`
+	ID         uuid.UUID      `db:"id"`
+	ImageUrl   sql.NullString `db:"image_url"`
+	FirstName  string         `db:"first_name"`
+	LastName   sql.NullString `db:"last_name"`
+	Username   string         `db:"username"`
+	CreatedAt  time.Time      `db:"created_at"`
+	ModifiedAt time.Time      `db:"modified_at"`
 }

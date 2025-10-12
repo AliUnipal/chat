@@ -8,5 +8,5 @@ CREATE TABLE users
     -- TODO: Decide later on the username to be either text or phone
     username   TEXT        NOT NULL,
     created_at TIMESTAMP   NOT NULL,
-    updated_at TIMESTAMP   NOT NULL
+    modified_at TIMESTAMP   NOT NULL
 );

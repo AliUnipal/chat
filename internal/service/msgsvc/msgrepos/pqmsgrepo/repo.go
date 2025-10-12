@@ -1,3 +1,3 @@
-package psqlmsgrepo
+package pqmsgrepo
 
 //go:generate sqlc generate

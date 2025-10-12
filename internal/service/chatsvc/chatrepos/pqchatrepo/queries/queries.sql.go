@@ -8,94 +8,243 @@ package queries
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 const createChat = `-- name: CreateChat :exec
-INSERT INTO chats (id, current_user_id, other_user_id, created_at, updated_at)
+INSERT INTO chats (id, user_one_id, user_two_id, created_at, modified_at)
 VALUES
-    ($1, $2, $3, $4, $5),
-    ($6, $3, $2, $4, $5)
+    ($1, $2, $3, $4, $5)
 `
 
 type CreateChatParams struct {
-	ID            uuid.UUID    `db:"id"`
-	CurrentUserID uuid.UUID    `db:"current_user_id"`
-	OtherUserID   uuid.UUID    `db:"other_user_id"`
-	CreatedAt     sql.NullTime `db:"created_at"`
-	UpdatedAt     sql.NullTime `db:"updated_at"`
-	ID_2          uuid.UUID    `db:"id_2"`
+	ID         uuid.UUID    `db:"id"`
+	UserOneID  uuid.UUID    `db:"user_one_id"`
+	UserTwoID  uuid.UUID    `db:"user_two_id"`
+	CreatedAt  sql.NullTime `db:"created_at"`
+	ModifiedAt sql.NullTime `db:"modified_at"`
 }
 
 // CreateChat
 //
-//	INSERT INTO chats (id, current_user_id, other_user_id, created_at, updated_at)
+//	INSERT INTO chats (id, user_one_id, user_two_id, created_at, modified_at)
 //	VALUES
-//	    ($1, $2, $3, $4, $5),
-//	    ($6, $3, $2, $4, $5)
+//	    ($1, $2, $3, $4, $5)
 func (q *Queries) CreateChat(ctx context.Context, arg CreateChatParams) error {
 	_, err := q.exec(ctx, q.createChatStmt, createChat,
 		arg.ID,
-		arg.CurrentUserID,
-		arg.OtherUserID,
+		arg.UserOneID,
+		arg.UserTwoID,
 		arg.CreatedAt,
-		arg.UpdatedAt,
-		arg.ID_2,
+		arg.ModifiedAt,
 	)
 	return err
 }
 
 const getChat = `-- name: GetChat :one
-SELECT id, current_user_id, other_user_id, created_at, updated_at
-FROM chats
-WHERE id = $1
+SELECT
+    c.id AS chat_id,
+    c.created_at AS chat_created_at,
+    c.modified_at AS chat_modified_at,
+
+    u1.id AS user_one_id,
+    u1.first_name AS user_one_first_name,
+    u1.last_name AS user_one_last_name,
+    u1.username AS user_one_username,
+    u1.image_url AS user_one_image_url,
+    u1.created_at AS user_one_created_at,
+    u1.modified_at AS user_one_modified_At,
+
+
+    u2.id AS user_two_id,
+    u2.first_name AS user_two_first_name,
+    u2.last_name AS user_two_last_name,
+    u2.username AS user_two_username,
+    u2.image_url AS user_two_image_url,
+    u2.created_at AS user_two_created_at,
+    u2.modified_at AS user_two_modified_At
+FROM chats AS c
+         JOIN users AS u1 ON c.user_one_id = u1.id
+         JOIN users AS u2 ON c.user_two_id = u2.id
+WHERE c.id = $1
 `
+
+type GetChatRow struct {
+	ChatID            uuid.UUID      `db:"chat_id"`
+	ChatCreatedAt     sql.NullTime   `db:"chat_created_at"`
+	ChatModifiedAt    sql.NullTime   `db:"chat_modified_at"`
+	UserOneID         uuid.UUID      `db:"user_one_id"`
+	UserOneFirstName  string         `db:"user_one_first_name"`
+	UserOneLastName   sql.NullString `db:"user_one_last_name"`
+	UserOneUsername   string         `db:"user_one_username"`
+	UserOneImageUrl   sql.NullString `db:"user_one_image_url"`
+	UserOneCreatedAt  time.Time      `db:"user_one_created_at"`
+	UserOneModifiedAt time.Time      `db:"user_one_modified_at"`
+	UserTwoID         uuid.UUID      `db:"user_two_id"`
+	UserTwoFirstName  string         `db:"user_two_first_name"`
+	UserTwoLastName   sql.NullString `db:"user_two_last_name"`
+	UserTwoUsername   string         `db:"user_two_username"`
+	UserTwoImageUrl   sql.NullString `db:"user_two_image_url"`
+	UserTwoCreatedAt  time.Time      `db:"user_two_created_at"`
+	UserTwoModifiedAt time.Time      `db:"user_two_modified_at"`
+}
 
 // GetChat
 //
-//	SELECT id, current_user_id, other_user_id, created_at, updated_at
-//	FROM chats
-//	WHERE id = $1
-func (q *Queries) GetChat(ctx context.Context, id uuid.UUID) (Chat, error) {
+//	SELECT
+//	    c.id AS chat_id,
+//	    c.created_at AS chat_created_at,
+//	    c.modified_at AS chat_modified_at,
+//
+//	    u1.id AS user_one_id,
+//	    u1.first_name AS user_one_first_name,
+//	    u1.last_name AS user_one_last_name,
+//	    u1.username AS user_one_username,
+//	    u1.image_url AS user_one_image_url,
+//	    u1.created_at AS user_one_created_at,
+//	    u1.modified_at AS user_one_modified_At,
+//
+//
+//	    u2.id AS user_two_id,
+//	    u2.first_name AS user_two_first_name,
+//	    u2.last_name AS user_two_last_name,
+//	    u2.username AS user_two_username,
+//	    u2.image_url AS user_two_image_url,
+//	    u2.created_at AS user_two_created_at,
+//	    u2.modified_at AS user_two_modified_At
+//	FROM chats AS c
+//	         JOIN users AS u1 ON c.user_one_id = u1.id
+//	         JOIN users AS u2 ON c.user_two_id = u2.id
+//	WHERE c.id = $1
+func (q *Queries) GetChat(ctx context.Context, id uuid.UUID) (GetChatRow, error) {
 	row := q.queryRow(ctx, q.getChatStmt, getChat, id)
-	var i Chat
+	var i GetChatRow
 	err := row.Scan(
-		&i.ID,
-		&i.CurrentUserID,
-		&i.OtherUserID,
-		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.ChatID,
+		&i.ChatCreatedAt,
+		&i.ChatModifiedAt,
+		&i.UserOneID,
+		&i.UserOneFirstName,
+		&i.UserOneLastName,
+		&i.UserOneUsername,
+		&i.UserOneImageUrl,
+		&i.UserOneCreatedAt,
+		&i.UserOneModifiedAt,
+		&i.UserTwoID,
+		&i.UserTwoFirstName,
+		&i.UserTwoLastName,
+		&i.UserTwoUsername,
+		&i.UserTwoImageUrl,
+		&i.UserTwoCreatedAt,
+		&i.UserTwoModifiedAt,
 	)
 	return i, err
 }
 
 const getChatsByUser = `-- name: GetChatsByUser :many
-SELECT id, current_user_id, other_user_id, created_at, updated_at
-FROM chats
-WHERE current_user_id = $1
+SELECT
+    c.id AS chat_id,
+    c.created_at AS chat_created_at,
+    c.modified_at AS chat_modified_at,
+
+    u1.id AS user_one_id,
+    u1.first_name AS user_one_first_name,
+    u1.last_name AS user_one_last_name,
+    u1.username AS user_one_username,
+    u1.image_url AS user_one_image_url,
+    u1.created_at AS user_one_created_at,
+    u1.modified_at AS user_one_modified_At,
+
+
+    u2.id AS user_two_id,
+    u2.first_name AS user_two_first_name,
+    u2.last_name AS user_two_last_name,
+    u2.username AS user_two_username,
+    u2.image_url AS user_two_image_url,
+    u2.created_at AS user_two_created_at,
+    u2.modified_at AS user_two_modified_At
+FROM chats AS c
+JOIN users AS u1 ON c.user_one_id = u1.id
+JOIN users AS u2 ON c.user_two_id = u2.id
+WHERE user_one_id = $1 OR user_two_id = $1
 `
+
+type GetChatsByUserRow struct {
+	ChatID            uuid.UUID      `db:"chat_id"`
+	ChatCreatedAt     sql.NullTime   `db:"chat_created_at"`
+	ChatModifiedAt    sql.NullTime   `db:"chat_modified_at"`
+	UserOneID         uuid.UUID      `db:"user_one_id"`
+	UserOneFirstName  string         `db:"user_one_first_name"`
+	UserOneLastName   sql.NullString `db:"user_one_last_name"`
+	UserOneUsername   string         `db:"user_one_username"`
+	UserOneImageUrl   sql.NullString `db:"user_one_image_url"`
+	UserOneCreatedAt  time.Time      `db:"user_one_created_at"`
+	UserOneModifiedAt time.Time      `db:"user_one_modified_at"`
+	UserTwoID         uuid.UUID      `db:"user_two_id"`
+	UserTwoFirstName  string         `db:"user_two_first_name"`
+	UserTwoLastName   sql.NullString `db:"user_two_last_name"`
+	UserTwoUsername   string         `db:"user_two_username"`
+	UserTwoImageUrl   sql.NullString `db:"user_two_image_url"`
+	UserTwoCreatedAt  time.Time      `db:"user_two_created_at"`
+	UserTwoModifiedAt time.Time      `db:"user_two_modified_at"`
+}
 
 // GetChatsByUser
 //
-//	SELECT id, current_user_id, other_user_id, created_at, updated_at
-//	FROM chats
-//	WHERE current_user_id = $1
-func (q *Queries) GetChatsByUser(ctx context.Context, currentUserID uuid.UUID) ([]Chat, error) {
-	rows, err := q.query(ctx, q.getChatsByUserStmt, getChatsByUser, currentUserID)
+//	SELECT
+//	    c.id AS chat_id,
+//	    c.created_at AS chat_created_at,
+//	    c.modified_at AS chat_modified_at,
+//
+//	    u1.id AS user_one_id,
+//	    u1.first_name AS user_one_first_name,
+//	    u1.last_name AS user_one_last_name,
+//	    u1.username AS user_one_username,
+//	    u1.image_url AS user_one_image_url,
+//	    u1.created_at AS user_one_created_at,
+//	    u1.modified_at AS user_one_modified_At,
+//
+//
+//	    u2.id AS user_two_id,
+//	    u2.first_name AS user_two_first_name,
+//	    u2.last_name AS user_two_last_name,
+//	    u2.username AS user_two_username,
+//	    u2.image_url AS user_two_image_url,
+//	    u2.created_at AS user_two_created_at,
+//	    u2.modified_at AS user_two_modified_At
+//	FROM chats AS c
+//	JOIN users AS u1 ON c.user_one_id = u1.id
+//	JOIN users AS u2 ON c.user_two_id = u2.id
+//	WHERE user_one_id = $1 OR user_two_id = $1
+func (q *Queries) GetChatsByUser(ctx context.Context, userOneID uuid.UUID) ([]GetChatsByUserRow, error) {
+	rows, err := q.query(ctx, q.getChatsByUserStmt, getChatsByUser, userOneID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Chat
+	var items []GetChatsByUserRow
 	for rows.Next() {
-		var i Chat
+		var i GetChatsByUserRow
 		if err := rows.Scan(
-			&i.ID,
-			&i.CurrentUserID,
-			&i.OtherUserID,
-			&i.CreatedAt,
-			&i.UpdatedAt,
+			&i.ChatID,
+			&i.ChatCreatedAt,
+			&i.ChatModifiedAt,
+			&i.UserOneID,
+			&i.UserOneFirstName,
+			&i.UserOneLastName,
+			&i.UserOneUsername,
+			&i.UserOneImageUrl,
+			&i.UserOneCreatedAt,
+			&i.UserOneModifiedAt,
+			&i.UserTwoID,
+			&i.UserTwoFirstName,
+			&i.UserTwoLastName,
+			&i.UserTwoUsername,
+			&i.UserTwoImageUrl,
+			&i.UserTwoCreatedAt,
+			&i.UserTwoModifiedAt,
 		); err != nil {
 			return nil, err
 		}

@@ -14,23 +14,23 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, image_url, first_name, last_name, username, created_at, updated_at)
+INSERT INTO users (id, image_url, first_name, last_name, username, created_at, modified_at)
 VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateUserParams struct {
-	ID        uuid.UUID      `db:"id"`
-	ImageUrl  sql.NullString `db:"image_url"`
-	FirstName string         `db:"first_name"`
-	LastName  sql.NullString `db:"last_name"`
-	Username  string         `db:"username"`
-	CreatedAt time.Time      `db:"created_at"`
-	UpdatedAt time.Time      `db:"updated_at"`
+	ID         uuid.UUID      `db:"id"`
+	ImageUrl   sql.NullString `db:"image_url"`
+	FirstName  string         `db:"first_name"`
+	LastName   sql.NullString `db:"last_name"`
+	Username   string         `db:"username"`
+	CreatedAt  time.Time      `db:"created_at"`
+	ModifiedAt time.Time      `db:"modified_at"`
 }
 
 // CreateUser
 //
-//	INSERT INTO users (id, image_url, first_name, last_name, username, created_at, updated_at)
+//	INSERT INTO users (id, image_url, first_name, last_name, username, created_at, modified_at)
 //	VALUES ($1, $2, $3, $4, $5, $6, $7)
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	_, err := q.exec(ctx, q.createUserStmt, createUser,
@@ -40,20 +40,20 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.LastName,
 		arg.Username,
 		arg.CreatedAt,
-		arg.UpdatedAt,
+		arg.ModifiedAt,
 	)
 	return err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, image_url, first_name, last_name, username, created_at, updated_at
+SELECT id, image_url, first_name, last_name, username, created_at, modified_at
 FROM users
 WHERE id = $1
 `
 
 // GetUser
 //
-//	SELECT id, image_url, first_name, last_name, username, created_at, updated_at
+//	SELECT id, image_url, first_name, last_name, username, created_at, modified_at
 //	FROM users
 //	WHERE id = $1
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -66,7 +66,7 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.LastName,
 		&i.Username,
 		&i.CreatedAt,
-		&i.UpdatedAt,
+		&i.ModifiedAt,
 	)
 	return i, err
 }

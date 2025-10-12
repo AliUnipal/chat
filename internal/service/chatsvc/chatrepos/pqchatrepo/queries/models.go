@@ -3,17 +3,3 @@
 //   sqlc v1.27.0
 
 package queries
-
-import (
-	"database/sql"
-
-	"github.com/google/uuid"
-)
-
-type Chat struct {
-	ID            uuid.UUID    `db:"id"`
-	CurrentUserID uuid.UUID    `db:"current_user_id"`
-	OtherUserID   uuid.UUID    `db:"other_user_id"`
-	CreatedAt     sql.NullTime `db:"created_at"`
-	UpdatedAt     sql.NullTime `db:"updated_at"`
-}

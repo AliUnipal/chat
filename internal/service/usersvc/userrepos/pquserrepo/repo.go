@@ -1,3 +1,3 @@
-package psqluserrepo
+package pquserrepo
 
 //go:generate sqlc generate
