@@ -15,6 +15,8 @@ import (
 	"github.com/AliUnipal/chat/internal/service/usersvc"
 	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos/pquserrepo"
 	"github.com/google/uuid"
+	"github.com/joho/godotenv"
+	_ "github.com/lib/pq"
 	"log"
 	"os"
 	"strings"
@@ -42,6 +44,11 @@ type application struct {
 }
 
 func main() {
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Print(err)
+	}
+
 	defer func() {
 		if r := recover(); r != nil {
 			fmt.Println("Recovered from panic: ", r)
@@ -198,6 +205,10 @@ func (app *application) handler(ctx context.Context) error {
 		if err != nil {
 			return err
 		}
+		if len(msgs) == 0 {
+			fmt.Println("No messages")
+		}
+
 		for i, m := range msgs {
 			fmt.Println("------")
 			fmt.Println("Message No.:", i)
