@@ -5,15 +5,15 @@
 package queries
 
 import (
-	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
 
 type Message struct {
-	ID        uuid.UUID    `db:"id"`
-	SenderID  uuid.UUID    `db:"sender_id"`
-	ChatID    uuid.UUID    `db:"chat_id"`
-	Content   []byte       `db:"content"`
-	CreatedAt sql.NullTime `db:"created_at"`
+	ID        uuid.UUID `db:"id"`
+	SenderID  uuid.UUID `db:"sender_id"`
+	ChatID    uuid.UUID `db:"chat_id"`
+	Content   []byte    `db:"content"`
+	CreatedAt time.Time `db:"created_at"`
 }

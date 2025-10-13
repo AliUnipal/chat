@@ -5,5 +5,5 @@ CREATE TABLE messages
     sender_id  UUID NOT NULL REFERENCES users (id),
     chat_id    UUID NOT NULL REFERENCES chats (id) ON DELETE CASCADE,
     content    BYTEA NOT NULL,
-    created_at TIMESTAMP
+    created_at TIMESTAMP NOT NULL
 );

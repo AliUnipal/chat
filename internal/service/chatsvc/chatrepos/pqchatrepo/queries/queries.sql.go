@@ -20,11 +20,11 @@ VALUES
 `
 
 type CreateChatParams struct {
-	ID         uuid.UUID    `db:"id"`
-	UserOneID  uuid.UUID    `db:"user_one_id"`
-	UserTwoID  uuid.UUID    `db:"user_two_id"`
-	CreatedAt  sql.NullTime `db:"created_at"`
-	ModifiedAt sql.NullTime `db:"modified_at"`
+	ID         uuid.UUID `db:"id"`
+	UserOneID  uuid.UUID `db:"user_one_id"`
+	UserTwoID  uuid.UUID `db:"user_two_id"`
+	CreatedAt  time.Time `db:"created_at"`
+	ModifiedAt time.Time `db:"modified_at"`
 }
 
 // CreateChat
@@ -73,8 +73,8 @@ WHERE c.id = $1
 
 type GetChatRow struct {
 	ChatID            uuid.UUID      `db:"chat_id"`
-	ChatCreatedAt     sql.NullTime   `db:"chat_created_at"`
-	ChatModifiedAt    sql.NullTime   `db:"chat_modified_at"`
+	ChatCreatedAt     time.Time      `db:"chat_created_at"`
+	ChatModifiedAt    time.Time      `db:"chat_modified_at"`
 	UserOneID         uuid.UUID      `db:"user_one_id"`
 	UserOneFirstName  string         `db:"user_one_first_name"`
 	UserOneLastName   sql.NullString `db:"user_one_last_name"`
@@ -173,8 +173,8 @@ WHERE user_one_id = $1 OR user_two_id = $1
 
 type GetChatsByUserRow struct {
 	ChatID            uuid.UUID      `db:"chat_id"`
-	ChatCreatedAt     sql.NullTime   `db:"chat_created_at"`
-	ChatModifiedAt    sql.NullTime   `db:"chat_modified_at"`
+	ChatCreatedAt     time.Time      `db:"chat_created_at"`
+	ChatModifiedAt    time.Time      `db:"chat_modified_at"`
 	UserOneID         uuid.UUID      `db:"user_one_id"`
 	UserOneFirstName  string         `db:"user_one_first_name"`
 	UserOneLastName   sql.NullString `db:"user_one_last_name"`

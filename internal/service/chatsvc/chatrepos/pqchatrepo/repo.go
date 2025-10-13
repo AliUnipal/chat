@@ -38,17 +38,12 @@ type repo struct {
 }
 
 func (r *repo) CreateChat(ctx context.Context, in chatrepos.CreateChatInput) error {
-	createdAt := sql.NullTime{
-		Time:  time.Now(),
-		Valid: true,
-	}
-
 	return r.q.CreateChat(ctx, queries.CreateChatParams{
 		ID:         in.ID,
 		UserOneID:  in.CurrentUserID,
 		UserTwoID:  in.OtherUserID,
-		CreatedAt:  createdAt,
-		ModifiedAt: createdAt,
+		CreatedAt:  time.Now().UTC(),
+		ModifiedAt: time.Now().UTC(),
 	})
 }
 

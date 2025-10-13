@@ -7,7 +7,7 @@ package queries
 
 import (
 	"context"
-	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -18,11 +18,11 @@ VALUES ($1, $2, $3, $4, $5)
 `
 
 type CreateMessageParams struct {
-	ID        uuid.UUID    `db:"id"`
-	SenderID  uuid.UUID    `db:"sender_id"`
-	ChatID    uuid.UUID    `db:"chat_id"`
-	Content   []byte       `db:"content"`
-	CreatedAt sql.NullTime `db:"created_at"`
+	ID        uuid.UUID `db:"id"`
+	SenderID  uuid.UUID `db:"sender_id"`
+	ChatID    uuid.UUID `db:"chat_id"`
+	Content   []byte    `db:"content"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 // CreateMessage
