@@ -2,21 +2,18 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"fmt"
 	"github.com/AliUnipal/chat/internal/models/chat"
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/service/chatsvc"
-	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos"
-	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos/inmemchatrepo"
+	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos/pqchatrepo"
 	"github.com/AliUnipal/chat/internal/service/msgsvc"
-	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
-	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos/inmemmsgrepo"
+	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos/pqmsgrepo"
 	"github.com/AliUnipal/chat/internal/service/usersvc"
-	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
-	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos/inmemuserrepo"
-	"github.com/AliUnipal/chat/pkg/snapper"
+	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos/pquserrepo"
 	"github.com/google/uuid"
 	"log"
 	"os"
@@ -51,31 +48,37 @@ func main() {
 		}
 	}()
 
+	dbUrl := os.Getenv("DB_URL")
+	if dbUrl == "" {
+		log.Fatal("DB_URL is not found in the environment")
+	}
+	conn, err := sql.Open("postgres", dbUrl)
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	ctx := context.Background()
 
-	usrSnapper := snapper.NewFileSnapper[userrepos.Data]("users_data.json")
-	userRepo := inmemuserrepo.New(usrSnapper)
-	userSvc := usersvc.NewService(userRepo)
-	defer func() {
-		if err := userRepo.Close(ctx); err != nil {
-			log.Println(err)
-		}
-	}()
-
-	chatSnapper := snapper.NewFileSnapper[chatrepos.Data]("chat_data.json")
-	chatRepo := inmemchatrepo.New(chatSnapper, chatRepoUserRepoWrapper{userRepo})
+	chatRepo := pqchatrepo.Must(ctx, conn)
 	chatSvc := chatsvc.NewService(chatRepo)
 	defer func() {
-		if err := chatRepo.Close(ctx); err != nil {
+		if err := chatRepo.Close(); err != nil {
 			log.Println(err)
 		}
 	}()
 
-	msgSnapper := snapper.NewFileSnapper[msgrepos.Data]("msgs_data.json")
-	msgRepo := inmemmsgrepo.New(msgSnapper, &msgRepoChatRepoWrapper{chatRepo})
+	userRepo := pquserrepo.Must(ctx, conn)
+	userSvc := usersvc.NewService(userRepo)
+	defer func() {
+		if err := userRepo.Close(); err != nil {
+			log.Println(err)
+		}
+	}()
+
+	msgRepo := pqmsgrepo.Must(ctx, conn)
 	msgSvc := msgsvc.NewService(msgRepo)
 	defer func() {
-		if err := msgRepo.Close(ctx); err != nil {
+		if err := msgRepo.Close(); err != nil {
 			log.Println(err)
 		}
 	}()

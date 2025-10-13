@@ -83,3 +83,7 @@ func (r *repo) GetUser(ctx context.Context, id uuid.UUID) (userrepos.User, error
 		Username:  u.Username,
 	}, nil
 }
+
+func (r *repo) Close() error {
+	return r.db.Close()
+}

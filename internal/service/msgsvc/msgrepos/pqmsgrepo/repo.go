@@ -63,3 +63,7 @@ func (r *repo) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Me
 
 	return msgs, nil
 }
+
+func (r *repo) Close() error {
+	return r.db.Close()
+}

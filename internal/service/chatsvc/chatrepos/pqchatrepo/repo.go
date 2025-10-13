@@ -111,3 +111,7 @@ func (r *repo) GetChat(ctx context.Context, chatID uuid.UUID) (*chatrepos.Chat, 
 
 	return dbChatToRepoChat(queries.GetChatsByUserRow(dbC)), nil
 }
+
+func (r *repo) Close() error {
+	return r.db.Close()
+}
