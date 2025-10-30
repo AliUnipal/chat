@@ -3,6 +3,8 @@ package pqmsgrepo
 import (
 	"context"
 	"database/sql"
+	"errors"
+
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos/pqmsgrepo/queries"
 	"github.com/google/uuid"
@@ -11,15 +13,16 @@ import (
 //go:generate sqlc generate
 
 func New(ctx context.Context, db *sql.DB) (*repo, error) {
+	if db == nil {
+		return nil, errors.New("db is nil")
+	}
+
 	q, err := queries.Prepare(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 
-	return &repo{
-		q:  q,
-		db: db,
-	}, nil
+	return &repo{q}, nil
 }
 
 func Must(ctx context.Context, db *sql.DB) *repo {
@@ -31,8 +34,7 @@ func Must(ctx context.Context, db *sql.DB) *repo {
 }
 
 type repo struct {
-	q  *queries.Queries
-	db *sql.DB
+	q *queries.Queries
 }
 
 func (r *repo) CreateMessage(ctx context.Context, in msgrepos.CreateMessageInput) error {
@@ -47,6 +49,9 @@ func (r *repo) CreateMessage(ctx context.Context, in msgrepos.CreateMessageInput
 
 func (r *repo) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Message, error) {
 	dbMsgs, err := r.q.GetMessages(ctx, chatID)
+	if err == sql.ErrConnDone {
+		return nil, msgrepos.ErrNotFound
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -65,5 +70,5 @@ func (r *repo) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Me
 }
 
 func (r *repo) Close() error {
-	return r.db.Close()
+	return r.q.Close()
 }

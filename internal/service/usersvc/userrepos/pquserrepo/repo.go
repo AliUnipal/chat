@@ -3,24 +3,27 @@ package pquserrepo
 import (
 	"context"
 	"database/sql"
+	"errors"
+	"time"
+
 	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos/pquserrepo/queries"
 	"github.com/google/uuid"
-	"time"
 )
 
 //go:generate sqlc generate
 
 func New(ctx context.Context, db *sql.DB) (*repo, error) {
+	if db == nil {
+		return nil, errors.New("db is nil")
+	}
+
 	q, err := queries.Prepare(ctx, db)
 	if err != nil {
 		return nil, err
 	}
 
-	return &repo{
-		q:  q,
-		db: db,
-	}, nil
+	return &repo{q}, nil
 }
 
 func Must(ctx context.Context, db *sql.DB) *repo {
@@ -33,8 +36,7 @@ func Must(ctx context.Context, db *sql.DB) *repo {
 }
 
 type repo struct {
-	q  *queries.Queries
-	db *sql.DB
+	q *queries.Queries
 }
 
 func (r *repo) CreateUser(ctx context.Context, in userrepos.CreateUserInput) error {
@@ -50,18 +52,20 @@ func (r *repo) CreateUser(ctx context.Context, in userrepos.CreateUserInput) err
 	}
 
 	return r.q.CreateUser(ctx, queries.CreateUserParams{
-		ID:         in.ID,
-		ImageUrl:   imgUrl,
-		FirstName:  in.FirstName,
-		LastName:   lastName,
-		Username:   in.Username,
-		CreatedAt:  time.Now().UTC(),
-		ModifiedAt: time.Now().UTC(),
+		ID:        in.ID,
+		ImageUrl:  imgUrl,
+		FirstName: in.FirstName,
+		LastName:  lastName,
+		Username:  in.Username,
+		CreatedAt: time.Now(),
 	})
 }
 
 func (r *repo) GetUser(ctx context.Context, id uuid.UUID) (userrepos.User, error) {
 	u, err := r.q.GetUser(ctx, id)
+	if err == sql.ErrNoRows {
+		return userrepos.User{}, userrepos.ErrNotFound
+	}
 	if err != nil {
 		return userrepos.User{}, err
 	}
@@ -85,5 +89,5 @@ func (r *repo) GetUser(ctx context.Context, id uuid.UUID) (userrepos.User, error
 }
 
 func (r *repo) Close() error {
-	return r.db.Close()
+	return r.q.Close()
 }

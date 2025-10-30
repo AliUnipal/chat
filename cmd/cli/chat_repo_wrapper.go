@@ -2,10 +2,13 @@ package main
 
 import (
 	"context"
+
 	"github.com/AliUnipal/chat/internal/service/chatsvc/chatrepos"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
 )
+
+// Just for reference
 
 type chatRepo interface {
 	GetChat(ctx context.Context, id uuid.UUID) (*chatrepos.Chat, error)

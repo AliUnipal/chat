@@ -2,7 +2,8 @@ version: "2"
 sql:
   - name: "chats"
     engine: "postgresql"
-    schema: "../migrations"
+#    schema: "internal/migrations"
+    schema: "../../../../migrations"
     queries: "sql/queries.sql"
     gen:
       go:

@@ -41,14 +41,14 @@ func (q *Queries) CreateMessage(ctx context.Context, arg CreateMessageParams) er
 }
 
 const getMessages = `-- name: GetMessages :many
-SELECT id, sender_id, chat_id, content, created_at
+SELECT id, sender_id, chat_id, content, created_at, modified_at
 FROM messages
 WHERE chat_id = $1
 `
 
 // GetMessages
 //
-//	SELECT id, sender_id, chat_id, content, created_at
+//	SELECT id, sender_id, chat_id, content, created_at, modified_at
 //	FROM messages
 //	WHERE chat_id = $1
 func (q *Queries) GetMessages(ctx context.Context, chatID uuid.UUID) ([]Message, error) {
@@ -66,6 +66,7 @@ func (q *Queries) GetMessages(ctx context.Context, chatID uuid.UUID) ([]Message,
 			&i.ChatID,
 			&i.Content,
 			&i.CreatedAt,
+			&i.ModifiedAt,
 		); err != nil {
 			return nil, err
 		}

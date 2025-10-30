@@ -7,64 +7,42 @@ package queries
 
 import (
 	"context"
-	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
 )
 
 const createChat = `-- name: CreateChat :exec
-INSERT INTO chats (id, user_one_id, user_two_id, created_at, modified_at)
+INSERT INTO chats (id, user_one_id, user_two_id, created_at)
 VALUES
-    ($1, $2, $3, $4, $5)
+    ($1, $2, $3, $4)
 `
 
 type CreateChatParams struct {
-	ID         uuid.UUID `db:"id"`
-	UserOneID  uuid.UUID `db:"user_one_id"`
-	UserTwoID  uuid.UUID `db:"user_two_id"`
-	CreatedAt  time.Time `db:"created_at"`
-	ModifiedAt time.Time `db:"modified_at"`
+	ID        uuid.UUID `db:"id"`
+	UserOneID uuid.UUID `db:"user_one_id"`
+	UserTwoID uuid.UUID `db:"user_two_id"`
+	CreatedAt time.Time `db:"created_at"`
 }
 
 // CreateChat
 //
-//	INSERT INTO chats (id, user_one_id, user_two_id, created_at, modified_at)
+//	INSERT INTO chats (id, user_one_id, user_two_id, created_at)
 //	VALUES
-//	    ($1, $2, $3, $4, $5)
+//	    ($1, $2, $3, $4)
 func (q *Queries) CreateChat(ctx context.Context, arg CreateChatParams) error {
 	_, err := q.exec(ctx, q.createChatStmt, createChat,
 		arg.ID,
 		arg.UserOneID,
 		arg.UserTwoID,
 		arg.CreatedAt,
-		arg.ModifiedAt,
 	)
 	return err
 }
 
 const getChat = `-- name: GetChat :one
 SELECT
-    c.id AS chat_id,
-    c.created_at AS chat_created_at,
-    c.modified_at AS chat_modified_at,
-
-    u1.id AS user_one_id,
-    u1.first_name AS user_one_first_name,
-    u1.last_name AS user_one_last_name,
-    u1.username AS user_one_username,
-    u1.image_url AS user_one_image_url,
-    u1.created_at AS user_one_created_at,
-    u1.modified_at AS user_one_modified_At,
-
-
-    u2.id AS user_two_id,
-    u2.first_name AS user_two_first_name,
-    u2.last_name AS user_two_last_name,
-    u2.username AS user_two_username,
-    u2.image_url AS user_two_image_url,
-    u2.created_at AS user_two_created_at,
-    u2.modified_at AS user_two_modified_At
+    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
 FROM chats AS c
          JOIN users AS u1 ON c.user_one_id = u1.id
          JOIN users AS u2 ON c.user_two_id = u2.id
@@ -72,48 +50,15 @@ WHERE c.id = $1
 `
 
 type GetChatRow struct {
-	ChatID            uuid.UUID      `db:"chat_id"`
-	ChatCreatedAt     time.Time      `db:"chat_created_at"`
-	ChatModifiedAt    time.Time      `db:"chat_modified_at"`
-	UserOneID         uuid.UUID      `db:"user_one_id"`
-	UserOneFirstName  string         `db:"user_one_first_name"`
-	UserOneLastName   sql.NullString `db:"user_one_last_name"`
-	UserOneUsername   string         `db:"user_one_username"`
-	UserOneImageUrl   sql.NullString `db:"user_one_image_url"`
-	UserOneCreatedAt  time.Time      `db:"user_one_created_at"`
-	UserOneModifiedAt time.Time      `db:"user_one_modified_at"`
-	UserTwoID         uuid.UUID      `db:"user_two_id"`
-	UserTwoFirstName  string         `db:"user_two_first_name"`
-	UserTwoLastName   sql.NullString `db:"user_two_last_name"`
-	UserTwoUsername   string         `db:"user_two_username"`
-	UserTwoImageUrl   sql.NullString `db:"user_two_image_url"`
-	UserTwoCreatedAt  time.Time      `db:"user_two_created_at"`
-	UserTwoModifiedAt time.Time      `db:"user_two_modified_at"`
+	Chat   Chat `db:"chat"`
+	User   User `db:"user"`
+	User_2 User `db:"user_2"`
 }
 
 // GetChat
 //
 //	SELECT
-//	    c.id AS chat_id,
-//	    c.created_at AS chat_created_at,
-//	    c.modified_at AS chat_modified_at,
-//
-//	    u1.id AS user_one_id,
-//	    u1.first_name AS user_one_first_name,
-//	    u1.last_name AS user_one_last_name,
-//	    u1.username AS user_one_username,
-//	    u1.image_url AS user_one_image_url,
-//	    u1.created_at AS user_one_created_at,
-//	    u1.modified_at AS user_one_modified_At,
-//
-//
-//	    u2.id AS user_two_id,
-//	    u2.first_name AS user_two_first_name,
-//	    u2.last_name AS user_two_last_name,
-//	    u2.username AS user_two_username,
-//	    u2.image_url AS user_two_image_url,
-//	    u2.created_at AS user_two_created_at,
-//	    u2.modified_at AS user_two_modified_At
+//	    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
 //	FROM chats AS c
 //	         JOIN users AS u1 ON c.user_one_id = u1.id
 //	         JOIN users AS u2 ON c.user_two_id = u2.id
@@ -122,49 +67,29 @@ func (q *Queries) GetChat(ctx context.Context, id uuid.UUID) (GetChatRow, error)
 	row := q.queryRow(ctx, q.getChatStmt, getChat, id)
 	var i GetChatRow
 	err := row.Scan(
-		&i.ChatID,
-		&i.ChatCreatedAt,
-		&i.ChatModifiedAt,
-		&i.UserOneID,
-		&i.UserOneFirstName,
-		&i.UserOneLastName,
-		&i.UserOneUsername,
-		&i.UserOneImageUrl,
-		&i.UserOneCreatedAt,
-		&i.UserOneModifiedAt,
-		&i.UserTwoID,
-		&i.UserTwoFirstName,
-		&i.UserTwoLastName,
-		&i.UserTwoUsername,
-		&i.UserTwoImageUrl,
-		&i.UserTwoCreatedAt,
-		&i.UserTwoModifiedAt,
+		&i.Chat.ID,
+		&i.Chat.UserOneID,
+		&i.Chat.UserTwoID,
+		&i.Chat.CreatedAt,
+		&i.User.ID,
+		&i.User.ImageUrl,
+		&i.User.FirstName,
+		&i.User.LastName,
+		&i.User.Username,
+		&i.User.CreatedAt,
+		&i.User_2.ID,
+		&i.User_2.ImageUrl,
+		&i.User_2.FirstName,
+		&i.User_2.LastName,
+		&i.User_2.Username,
+		&i.User_2.CreatedAt,
 	)
 	return i, err
 }
 
 const getChatsByUser = `-- name: GetChatsByUser :many
 SELECT
-    c.id AS chat_id,
-    c.created_at AS chat_created_at,
-    c.modified_at AS chat_modified_at,
-
-    u1.id AS user_one_id,
-    u1.first_name AS user_one_first_name,
-    u1.last_name AS user_one_last_name,
-    u1.username AS user_one_username,
-    u1.image_url AS user_one_image_url,
-    u1.created_at AS user_one_created_at,
-    u1.modified_at AS user_one_modified_At,
-
-
-    u2.id AS user_two_id,
-    u2.first_name AS user_two_first_name,
-    u2.last_name AS user_two_last_name,
-    u2.username AS user_two_username,
-    u2.image_url AS user_two_image_url,
-    u2.created_at AS user_two_created_at,
-    u2.modified_at AS user_two_modified_At
+    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
 FROM chats AS c
 JOIN users AS u1 ON c.user_one_id = u1.id
 JOIN users AS u2 ON c.user_two_id = u2.id
@@ -172,48 +97,15 @@ WHERE user_one_id = $1 OR user_two_id = $1
 `
 
 type GetChatsByUserRow struct {
-	ChatID            uuid.UUID      `db:"chat_id"`
-	ChatCreatedAt     time.Time      `db:"chat_created_at"`
-	ChatModifiedAt    time.Time      `db:"chat_modified_at"`
-	UserOneID         uuid.UUID      `db:"user_one_id"`
-	UserOneFirstName  string         `db:"user_one_first_name"`
-	UserOneLastName   sql.NullString `db:"user_one_last_name"`
-	UserOneUsername   string         `db:"user_one_username"`
-	UserOneImageUrl   sql.NullString `db:"user_one_image_url"`
-	UserOneCreatedAt  time.Time      `db:"user_one_created_at"`
-	UserOneModifiedAt time.Time      `db:"user_one_modified_at"`
-	UserTwoID         uuid.UUID      `db:"user_two_id"`
-	UserTwoFirstName  string         `db:"user_two_first_name"`
-	UserTwoLastName   sql.NullString `db:"user_two_last_name"`
-	UserTwoUsername   string         `db:"user_two_username"`
-	UserTwoImageUrl   sql.NullString `db:"user_two_image_url"`
-	UserTwoCreatedAt  time.Time      `db:"user_two_created_at"`
-	UserTwoModifiedAt time.Time      `db:"user_two_modified_at"`
+	Chat   Chat `db:"chat"`
+	User   User `db:"user"`
+	User_2 User `db:"user_2"`
 }
 
 // GetChatsByUser
 //
 //	SELECT
-//	    c.id AS chat_id,
-//	    c.created_at AS chat_created_at,
-//	    c.modified_at AS chat_modified_at,
-//
-//	    u1.id AS user_one_id,
-//	    u1.first_name AS user_one_first_name,
-//	    u1.last_name AS user_one_last_name,
-//	    u1.username AS user_one_username,
-//	    u1.image_url AS user_one_image_url,
-//	    u1.created_at AS user_one_created_at,
-//	    u1.modified_at AS user_one_modified_At,
-//
-//
-//	    u2.id AS user_two_id,
-//	    u2.first_name AS user_two_first_name,
-//	    u2.last_name AS user_two_last_name,
-//	    u2.username AS user_two_username,
-//	    u2.image_url AS user_two_image_url,
-//	    u2.created_at AS user_two_created_at,
-//	    u2.modified_at AS user_two_modified_At
+//	    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
 //	FROM chats AS c
 //	JOIN users AS u1 ON c.user_one_id = u1.id
 //	JOIN users AS u2 ON c.user_two_id = u2.id
@@ -228,23 +120,22 @@ func (q *Queries) GetChatsByUser(ctx context.Context, userOneID uuid.UUID) ([]Ge
 	for rows.Next() {
 		var i GetChatsByUserRow
 		if err := rows.Scan(
-			&i.ChatID,
-			&i.ChatCreatedAt,
-			&i.ChatModifiedAt,
-			&i.UserOneID,
-			&i.UserOneFirstName,
-			&i.UserOneLastName,
-			&i.UserOneUsername,
-			&i.UserOneImageUrl,
-			&i.UserOneCreatedAt,
-			&i.UserOneModifiedAt,
-			&i.UserTwoID,
-			&i.UserTwoFirstName,
-			&i.UserTwoLastName,
-			&i.UserTwoUsername,
-			&i.UserTwoImageUrl,
-			&i.UserTwoCreatedAt,
-			&i.UserTwoModifiedAt,
+			&i.Chat.ID,
+			&i.Chat.UserOneID,
+			&i.Chat.UserTwoID,
+			&i.Chat.CreatedAt,
+			&i.User.ID,
+			&i.User.ImageUrl,
+			&i.User.FirstName,
+			&i.User.LastName,
+			&i.User.Username,
+			&i.User.CreatedAt,
+			&i.User_2.ID,
+			&i.User_2.ImageUrl,
+			&i.User_2.FirstName,
+			&i.User_2.LastName,
+			&i.User_2.Username,
+			&i.User_2.CreatedAt,
 		); err != nil {
 			return nil, err
 		}
