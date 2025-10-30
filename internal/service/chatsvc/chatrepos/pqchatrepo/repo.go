@@ -48,27 +48,7 @@ func (r *repo) CreateChat(ctx context.Context, in chatrepos.CreateChatInput) err
 	})
 }
 
-type getChatsByUserRow queries.GetChatsByUserRow
 
-func (c getChatsByUserRow) toRepoChat() *chatrepos.Chat {
-	return &chatrepos.Chat{
-		ID: c.Chat.ID,
-		CurrentUser: chatrepos.User{
-			ID:        c.User.ID,
-			ImageURL:  c.User.ImageUrl.String,
-			FirstName: c.User.FirstName,
-			LastName:  c.User.LastName.String,
-			Username:  c.User.Username,
-		},
-		OtherUser: chatrepos.User{
-			ID:        c.User_2.ID,
-			ImageURL:  c.User_2.ImageUrl.String,
-			FirstName: c.User_2.FirstName,
-			LastName:  c.User_2.LastName.String,
-			Username:  c.User_2.Username,
-		},
-	}
-}
 
 func (r *repo) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatrepos.Chat, error) {
 	dbChats, err := r.q.GetChatsByUser(ctx, userID)
@@ -81,7 +61,7 @@ func (r *repo) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatrep
 
 	var chats []*chatrepos.Chat
 	for _, c := range dbChats {
-		chats = append(chats, getChatsByUserRow(c).toRepoChat())
+		chats = append(chats, c.ToRepoChat())
 	}
 
 	return chats, nil
@@ -96,7 +76,7 @@ func (r *repo) GetChat(ctx context.Context, chatID uuid.UUID) (*chatrepos.Chat, 
 		return nil, err
 	}
 
-	return getChatsByUserRow(dbC).toRepoChat(), nil
+	return queries.GetChatsByUserRow(dbC).ToRepoChat()., nil
 }
 
 func (r *repo) Close() error {
