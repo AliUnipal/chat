@@ -48,8 +48,6 @@ func (r *repo) CreateChat(ctx context.Context, in chatrepos.CreateChatInput) err
 	})
 }
 
-
-
 func (r *repo) GetChatsByUser(ctx context.Context, userID uuid.UUID) ([]*chatrepos.Chat, error) {
 	dbChats, err := r.q.GetChatsByUser(ctx, userID)
 	if err == sql.ErrNoRows {
@@ -76,7 +74,7 @@ func (r *repo) GetChat(ctx context.Context, chatID uuid.UUID) (*chatrepos.Chat, 
 		return nil, err
 	}
 
-	return queries.GetChatsByUserRow(dbC).ToRepoChat()., nil
+	return queries.GetChatsByUserRow(dbC).ToRepoChat(), nil
 }
 
 func (r *repo) Close() error {
