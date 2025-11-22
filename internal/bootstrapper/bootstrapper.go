@@ -16,10 +16,11 @@ import (
 	"github.com/google/uuid"
 )
 
+// New initializes a new bootstrapper with a database connection using the provided database URL.
+// Returns a pointer to the bootstrapper or an error if the connection or ping fails.
+// The caller is responsible for closing the connection.
 func New(dbUrl string) (*bootstrapper, error) {
 	conn, err := sql.Open("postgres", dbUrl)
-
-	//defer conn.Close()
 	if err != nil {
 		return nil, err
 	}
@@ -36,6 +37,10 @@ func New(dbUrl string) (*bootstrapper, error) {
 
 type bootstrapper struct {
 	dbConn *sql.DB
+}
+
+func (bs *bootstrapper) Close() error {
+	return bs.dbConn.Close()
 }
 
 type userService interface {
