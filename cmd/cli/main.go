@@ -215,8 +215,8 @@ func (app *application) handler(ctx context.Context) error {
 
 		for i, m := range msgs {
 			fmt.Println("------")
-			fmt.Println("Message No.:", i)
-			fmt.Printf("Message ID: %s\n", m.ID)
+			fmt.Println("Type No.:", i)
+			fmt.Printf("Type ID: %s\n", m.ID)
 			fmt.Printf("SenderID: %s\n", m.SenderID)
 			fmt.Printf("Content: %s\n", string(m.Content))
 			fmt.Printf("Content Type: %v\n", m.ContentType)

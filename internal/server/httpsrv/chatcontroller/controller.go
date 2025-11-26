@@ -42,7 +42,7 @@ func (c *chatController) CreateChat(w http.ResponseWriter, r *http.Request) {
 	var in CreateChatRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&in); err != nil {
-		slog.Error("failed to decode request CreateChatRequest", "error", err)
+		slog.ErrorContext(ctx, "failed to decode request CreateChatRequest", "error", err)
 		httpsrv.RespondWithError(ctx, w, "invalid_body", server.ErrInvalidRequestBody)
 		return
 	}
@@ -95,7 +95,7 @@ func (c *chatController) GetChats(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := req.validate(ctx); err != nil {
-		httpsrv.RespondWithValidationError(ctx, w, errcodes.InvalidInput, httpsrv.KV("id", "required"))
+		httpsrv.RespondWithBadRequestError(ctx, w, errcodes.InvalidUUID, err)
 		return
 	}
 

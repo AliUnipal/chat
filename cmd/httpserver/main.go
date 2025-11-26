@@ -15,6 +15,7 @@ import (
 
 	"github.com/AliUnipal/chat/internal/bootstrapper"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/chatcontroller"
+	"github.com/AliUnipal/chat/internal/server/httpsrv/messagecontroller"
 	_ "github.com/lib/pq"
 )
 
@@ -30,28 +31,28 @@ type chatController interface {
 }
 
 type userController interface {
-	HandleCreateUser(w http.ResponseWriter, r *http.Request)
-	HandleGetUser(w http.ResponseWriter, r *http.Request)
+	CreateUser(w http.ResponseWriter, r *http.Request)
+	GetUser(w http.ResponseWriter, r *http.Request)
 }
 
 type messageController interface {
-	HandleCreateMessage(w http.ResponseWriter, r *http.Request)
-	HandleGetMessages(w http.ResponseWriter, r *http.Request)
+	CreateMessage(w http.ResponseWriter, r *http.Request)
+	GetMessages(w http.ResponseWriter, r *http.Request)
 }
 
 type server struct {
 	srv            *http.Server
 	chatController chatController
 	//userController    userController
-	//messageController messageController
+	messageController messageController
 }
 
 func NewServer(
 	ctx context.Context,
 	port int,
 	chatController chatController,
-	// userController userController,
-	// controller messageController,
+//userController userController,
+	messageController messageController,
 ) *server {
 	if port <= 0 || port > 65535 {
 		panic(fmt.Sprintf("Invalid port number: %d", port))
@@ -63,9 +64,9 @@ func NewServer(
 	//if userController == nil {
 	//	panic("User controller cannot be nil")
 	//}
-	//if controller == nil {
-	//	panic("Message controller cannot be nil")
-	//}
+	if messageController == nil {
+		panic("Type controller cannot be nil")
+	}
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -79,7 +80,7 @@ func NewServer(
 		srv,
 		chatController,
 		//userController,
-		//controller
+		messageController,
 	}
 	s.registerHandlers()
 	return s
@@ -93,6 +94,8 @@ func (s *server) registerHandlers() {
 
 	mux.HandleFunc("POST /chats", s.chatController.CreateChat)
 	mux.HandleFunc("GET /chats/{id}", s.chatController.GetChats)
+	mux.HandleFunc("POST /chats/{id}/messages", s.messageController.CreateMessage)
+	mux.HandleFunc("GET /chats/{id}/messages", s.messageController.GetMessages)
 
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -145,9 +148,12 @@ func main() {
 	chatController := chatcontroller.New(chatSvc)
 
 	//userSvc := bs.NewUserService(ctx)
-	//msgSvc := bs.NewMessageService(ctx)
+	//userController := usercontroller.New(userSvc)
 
-	srv := NewServer(ctx, 8080, chatController)
+	msgSvc := bs.NewMessageService(ctx)
+	msgController := messagecontroller.New(msgSvc)
+
+	srv := NewServer(ctx, 8080, chatController, msgController)
 	go func() {
 		if err := srv.Start(); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {

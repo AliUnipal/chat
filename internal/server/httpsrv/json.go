@@ -12,6 +12,7 @@ type ErrorType string
 
 const (
 	UnknownError        ErrorType = ""
+	BadRequestError     ErrorType = "bad_request_error"
 	ValidationError     ErrorType = "validation_error"
 	AuthenticationError ErrorType = "authentication_error"
 	AuthorizationError  ErrorType = "authorization_error"
@@ -22,6 +23,8 @@ func httpCode(ctx context.Context, typ ErrorType) int {
 	case UnknownError:
 		return http.StatusInternalServerError
 	case ValidationError:
+		return http.StatusBadRequest
+	case BadRequestError:
 		return http.StatusBadRequest
 	default:
 		slog.ErrorContext(ctx, "unknown error type", "type", typ)
@@ -37,9 +40,27 @@ type errorResponse[T any] struct {
 	Errors  []errorResponse[T] `json:"errors,omitempty"`
 }
 
+func respond[T any](ctx context.Context, w http.ResponseWriter, status int, payload T) {
+	w.Header().Add("Content-Type", "application/json")
+	w.Header().Add("Timestamp", time.Now().String())
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(payload); err != nil {
+		slog.ErrorContext(ctx, "failed to encode response", "error", err)
+		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+	}
+}
+
 func RespondWithError(ctx context.Context, w http.ResponseWriter, code string, err error) {
 	respond(ctx, w, httpCode(ctx, UnknownError), errorResponse[struct{}]{
 		Type:    UnknownError,
+		Code:    code,
+		Message: err.Error(),
+	})
+}
+
+func RespondWithBadRequestError(ctx context.Context, w http.ResponseWriter, code string, err error) {
+	respond(ctx, w, httpCode(ctx, BadRequestError), errorResponse[struct{}]{
+		Type:    BadRequestError,
 		Code:    code,
 		Message: err.Error(),
 	})
@@ -54,6 +75,8 @@ type kv struct {
 	Key   string `json:"key"`
 	Value string `json:"value"`
 }
+
+type KVs []kv
 
 func KV(key, value string) kv {
 	return kv{Key: key, Value: value}
@@ -75,14 +98,4 @@ func RespondWithValidationError(ctx context.Context, w http.ResponseWriter, code
 
 func RespondWithJSON[T any](ctx context.Context, w http.ResponseWriter, payload T) {
 	respond(ctx, w, http.StatusOK, payload)
-}
-
-func respond[T any](ctx context.Context, w http.ResponseWriter, status int, payload T) {
-	w.Header().Add("Content-Type", "application/json")
-	w.Header().Add("Timestamp", time.Now().String())
-	w.WriteHeader(status)
-	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		slog.ErrorContext(ctx, "failed to encode response", "error", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-	}
 }
