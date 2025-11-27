@@ -56,7 +56,7 @@ func (s *service) CreateMessage(ctx context.Context, in MessageInput) (uuid.UUID
 		ChatID:      in.ChatID,
 		Content:     in.Content,
 		ContentType: in.ContentType,
-		Timestamp:   time.Now().UTC(),
+		Timestamp:   time.Now(),
 	}); err != nil {
 		return uuid.Nil, err
 	}

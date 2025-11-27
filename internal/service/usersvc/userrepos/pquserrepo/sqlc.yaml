@@ -1,0 +1,14 @@
+version: "2"
+sql:
+  - name: "users"
+    engine: "postgresql"
+    schema: "../../../../migrations"
+    queries: "sql/queries.sql"
+    gen:
+      go:
+        out: "queries"
+        emit_db_tags: true
+        emit_sql_as_comment: true
+        query_parameter_limit: 3
+        emit_prepared_queries: true
+        omit_unused_structs: true
