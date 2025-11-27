@@ -16,6 +16,7 @@ import (
 	"github.com/AliUnipal/chat/internal/bootstrapper"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/chatcontroller"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/messagecontroller"
+	"github.com/AliUnipal/chat/internal/server/httpsrv/usercontroller"
 	_ "github.com/lib/pq"
 )
 
@@ -41,9 +42,9 @@ type messageController interface {
 }
 
 type server struct {
-	srv            *http.Server
-	chatController chatController
-	//userController    userController
+	srv               *http.Server
+	chatController    chatController
+	userController    userController
 	messageController messageController
 }
 
@@ -51,7 +52,7 @@ func NewServer(
 	ctx context.Context,
 	port int,
 	chatController chatController,
-	//userController userController,
+	userController userController,
 	messageController messageController,
 ) *server {
 	if port <= 0 || port > 65535 {
@@ -61,9 +62,9 @@ func NewServer(
 	if chatController == nil {
 		panic("Chat controller cannot be nil")
 	}
-	//if userController == nil {
-	//	panic("User controller cannot be nil")
-	//}
+	if userController == nil {
+		panic("User controller cannot be nil")
+	}
 	if messageController == nil {
 		panic("Type controller cannot be nil")
 	}
@@ -79,7 +80,7 @@ func NewServer(
 	s := &server{
 		srv,
 		chatController,
-		//userController,
+		userController,
 		messageController,
 	}
 	s.registerHandlers()
@@ -147,13 +148,13 @@ func main() {
 	chatSvc := bs.NewChatService(ctx)
 	chatController := chatcontroller.New(chatSvc)
 
-	//userSvc := bs.NewUserService(ctx)
-	//userController := usercontroller.New(userSvc)
+	userSvc := bs.NewUserService(ctx)
+	userController := usercontroller.New(userSvc)
 
 	msgSvc := bs.NewMessageService(ctx)
 	msgController := messagecontroller.New(msgSvc)
 
-	srv := NewServer(ctx, 8080, chatController, msgController)
+	srv := NewServer(ctx, 8080, chatController, userController, msgController)
 	go func() {
 		if err := srv.Start(); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
