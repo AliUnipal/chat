@@ -11,6 +11,5 @@ CREATE TABLE chats
     id           UUID PRIMARY KEY,
     user_one_id UUID NOT NULL REFERENCES users (id),
     user_two_id   UUID NOT NULL REFERENCES users (id),
-    created_at   TIMESTAMP NOT NULL,
-    modified_at   TIMESTAMP NOT NULL
+    created_at   TIMESTAMP NOT NULL
 );
