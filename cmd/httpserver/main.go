@@ -51,7 +51,7 @@ func NewServer(
 	ctx context.Context,
 	port int,
 	chatController chatController,
-//userController userController,
+	//userController userController,
 	messageController messageController,
 ) *server {
 	if port <= 0 || port > 65535 {
