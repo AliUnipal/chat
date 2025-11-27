@@ -2,7 +2,6 @@ package chatsvc
 
 import (
 	"context"
-	"log/slog"
 
 	"github.com/AliUnipal/chat/internal/models/chat"
 	"github.com/AliUnipal/chat/internal/models/user"
