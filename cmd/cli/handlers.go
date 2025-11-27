@@ -39,7 +39,7 @@ func getGetUserInput(args []string) (uuid.UUID, error) {
 	var strID string
 
 	getUserFlags := flag.NewFlagSet("getUser", flag.ExitOnError)
-	getUserFlags.StringVar(&strID, "id", "", "User ID")
+	getUserFlags.StringVar(&strID, "id", "", "User UserID")
 
 	if err := getUserFlags.Parse(args); err != nil {
 		return uuid.Nil, err
@@ -59,8 +59,8 @@ func getGetUserInput(args []string) (uuid.UUID, error) {
 
 func getCreateChatInput(args []string) (uuid.UUID, uuid.UUID, error) {
 	createChatFlags := flag.NewFlagSet("createChat", flag.ExitOnError)
-	currID := createChatFlags.String("currentUserID", "", "Current User ID (Required)")
-	otherID := createChatFlags.String("otherUserID", "", "Other User ID (Required)")
+	currID := createChatFlags.String("currentUserID", "", "Current User UserID (Required)")
+	otherID := createChatFlags.String("otherUserID", "", "Other User UserID (Required)")
 
 	if err := createChatFlags.Parse(args); err != nil {
 		return uuid.Nil, uuid.Nil, err
@@ -88,7 +88,7 @@ func getUserID(args []string) (uuid.UUID, error) {
 	var strID string
 
 	userIDFlags := flag.NewFlagSet("getUserID", flag.ExitOnError)
-	userIDFlags.StringVar(&strID, "id", "", "User ID (Required)")
+	userIDFlags.StringVar(&strID, "id", "", "User UserID (Required)")
 
 	if err := userIDFlags.Parse(args); err != nil {
 		return uuid.Nil, err
@@ -109,7 +109,7 @@ func getSendMsgInput(args []string) (msgsvc.MessageInput, error) {
 	var msgInput msgsvc.MessageInput
 
 	msgFlags := flag.NewFlagSet("sendMsg", flag.ExitOnError)
-	strSenderID := msgFlags.String("senderID", "", "Sender ID (Required)")
+	strSenderID := msgFlags.String("senderID", "", "Sender UserID (Required)")
 	strChatID := msgFlags.String("chatID", "", "ChatID (Required)")
 	cont := msgFlags.String("content", "", "Content (Required)")
 

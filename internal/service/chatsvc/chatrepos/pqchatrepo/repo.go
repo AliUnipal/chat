@@ -80,7 +80,3 @@ func (r *repo) GetChat(ctx context.Context, chatID uuid.UUID) (*chatrepos.Chat, 
 func (r *repo) Close() error {
 	return r.q.Close()
 }
-
-func (r *repo) Close() error {
-	return r.db.Close()
-}

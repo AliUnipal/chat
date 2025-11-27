@@ -168,7 +168,7 @@ func (app *application) handler(ctx context.Context) error {
 			return err
 		}
 
-		fmt.Println("Created chat ID:", chatID)
+		fmt.Println("Created chat UserID:", chatID)
 	case "get-chats-by-user":
 		userID, err := getUserID(os.Args[2:])
 		if err != nil {
@@ -183,7 +183,7 @@ func (app *application) handler(ctx context.Context) error {
 		for i, c := range chats {
 			fmt.Println("------")
 			fmt.Println("Chat No.:", i)
-			fmt.Printf("Chat ID: %s\n", c.ID)
+			fmt.Printf("Chat UserID: %s\n", c.ID)
 			fmt.Printf("User one: %+v\n", c.CurrentUser)
 			fmt.Printf("User two: %+v\n", c.OtherUser)
 		}
@@ -198,7 +198,7 @@ func (app *application) handler(ctx context.Context) error {
 			return err
 		}
 
-		fmt.Println("Created message ID:", msgID)
+		fmt.Println("Created message UserID:", msgID)
 	case "get-messages":
 		chatID, err := getChatIDInput(os.Args[2:])
 		if err != nil {
@@ -216,7 +216,7 @@ func (app *application) handler(ctx context.Context) error {
 		for i, m := range msgs {
 			fmt.Println("------")
 			fmt.Println("Type No.:", i)
-			fmt.Printf("Type ID: %s\n", m.ID)
+			fmt.Printf("Type UserID: %s\n", m.ID)
 			fmt.Printf("SenderID: %s\n", m.SenderID)
 			fmt.Printf("Content: %s\n", string(m.Content))
 			fmt.Printf("Content Type: %v\n", m.ContentType)

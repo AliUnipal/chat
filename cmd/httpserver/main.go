@@ -94,7 +94,11 @@ func (s *server) registerHandlers() {
 	}
 
 	mux.HandleFunc("POST /chats", s.chatController.CreateChat)
-	mux.HandleFunc("GET /chats/{id}", s.chatController.GetChats)
+	mux.HandleFunc("GET /chats", s.chatController.GetChats)
+
+	mux.HandleFunc("POST /users", s.userController.CreateUser)
+	mux.HandleFunc("GET /users/{id}", s.userController.GetUser)
+
 	mux.HandleFunc("POST /chats/{id}/messages", s.messageController.CreateMessage)
 	mux.HandleFunc("GET /chats/{id}/messages", s.messageController.GetMessages)
 

@@ -58,7 +58,7 @@ func (c *chatController) CreateChat(w http.ResponseWriter, r *http.Request) {
 
 type (
 	GetChatsRequest struct {
-		ID         string `http_path:"id"`
+		UserID     string `http_query:"userID"`
 		parsedUUID uuid.UUID
 	}
 	GetChatResponse struct {
@@ -73,25 +73,25 @@ type (
 )
 
 func (r *GetChatsRequest) validate(ctx context.Context) error {
-	if r.ID == "" {
+	if r.UserID == "" {
 		slog.ErrorContext(ctx, "id is required", "error")
 		return errors.New("id is required")
 	}
 
-	chatId, err := uuid.Parse(r.ID)
+	userID, err := uuid.Parse(r.UserID)
 	if err != nil {
 		slog.ErrorContext(ctx, "invalid uuid", "error", err)
 		return server.ErrInvalidUUID
 	}
 
-	r.parsedUUID = chatId
+	r.parsedUUID = userID
 	return nil
 }
 
 func (c *chatController) GetChats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	req := GetChatsRequest{
-		ID: r.PathValue("id"),
+		UserID: r.URL.Query().Get("userID"),
 	}
 
 	if err := req.validate(ctx); err != nil {

@@ -30,7 +30,7 @@ func New(userService userService) *userController {
 
 type (
 	CreateUserRequest struct {
-		ImageURL  string `json:"imageURL,omitempty"`
+		ImageURL  string `json:"imageURL"`
 		FirstName string `json:"firstName"`
 		LastName  string `json:"lastName"`
 		Username  string `json:"username"`
@@ -46,13 +46,16 @@ func (v validationErrors) Error() string {
 }
 
 func (c *CreateUserRequest) validateAndDecode(ctx context.Context, r *http.Request) error {
-	if err := json.NewDecoder(r.Body).Decode(&r); err != nil {
+	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		slog.ErrorContext(ctx, "failed to decode request CreateUserRequest", "error", err)
 		return err
 	}
 
 	errs := validationErrors{}
 
+	if c.ImageURL == "" {
+		errs["imageURL"] = "required"
+	}
 	if c.FirstName == "" {
 		errs["firstName"] = "required"
 	}

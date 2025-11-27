@@ -49,7 +49,7 @@ func (r *repo) CreateMessage(ctx context.Context, in msgrepos.CreateMessageInput
 
 func (r *repo) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Message, error) {
 	dbMsgs, err := r.q.GetMessages(ctx, chatID)
-	if err == sql.ErrConnDone {
+	if err == sql.ErrNoRows {
 		return nil, msgrepos.ErrNotFound
 	}
 	if err != nil {
