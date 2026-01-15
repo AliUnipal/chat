@@ -155,7 +155,7 @@ type (
 
 func (r *GetMessagesRequest) validate(ctx context.Context) error {
 	if r.ChatID == "" {
-		slog.ErrorContext(ctx, "chat id is required", "error")
+		slog.ErrorContext(ctx, "chat id is required", "error", "required")
 		return errors.New("chat id is required")
 	}
 

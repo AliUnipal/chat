@@ -136,7 +136,7 @@ type (
 
 func (r *GetUserRequest) validate(ctx context.Context) error {
 	if r.ID == "" {
-		slog.ErrorContext(ctx, "id is required", "error")
+		slog.ErrorContext(ctx, "id is required", "error", "required")
 		return errors.New("id is required")
 	}
 
