@@ -3,12 +3,14 @@ package inmemuserrepo_test
 import (
 	"context"
 	"errors"
+	"reflect"
+	"testing"
+
 	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos/inmemuserrepo"
 	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos/inmemuserrepo/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
-	"testing"
 )
 
 func Test_CreateUser(t *testing.T) {
@@ -162,7 +164,7 @@ func Test_GetUser(t *testing.T) {
 		t.Fatalf("expected no error got %v", err)
 	}
 
-	if user != expUser {
+	if !reflect.DeepEqual(user, expUser) {
 		t.Fatalf("expected user %v got %v", expUser, user)
 	}
 }

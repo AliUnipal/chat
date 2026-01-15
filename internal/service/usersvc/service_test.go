@@ -2,13 +2,14 @@ package usersvc_test
 
 import (
 	"errors"
+	"testing"
+
 	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/service/usersvc"
 	"github.com/AliUnipal/chat/internal/service/usersvc/mocks"
 	"github.com/AliUnipal/chat/internal/service/usersvc/userrepos"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
-	"testing"
 )
 
 func TestCreateUser_ReturnID(t *testing.T) {
@@ -18,6 +19,7 @@ func TestCreateUser_ReturnID(t *testing.T) {
 		FirstName: "First CreateUserInput",
 		LastName:  "Test",
 		Username:  "+97312345678",
+		Password:  "potato",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
@@ -26,10 +28,16 @@ func TestCreateUser_ReturnID(t *testing.T) {
 			u.FirstName == userInput.FirstName &&
 			u.LastName == userInput.LastName &&
 			u.Username == userInput.Username &&
-			u.ImageURL == userInput.ImageURL
+			u.ImageURL == userInput.ImageURL &&
+			u.PasswordHash != nil
 	})).Return(nil)
 
-	service := usersvc.NewService(mockRepo)
+	mockHasher := mocks.NewHasher(t)
+	mockHasher.EXPECT().Hash(userInput.Password).Return([]byte("hashed"), nil)
+
+	mockJWT := mocks.NewIJWTManager(t)
+
+	service := usersvc.NewService(mockRepo, mockHasher, mockJWT)
 
 	id, err := service.CreateUser(ctx, userInput)
 	if err != nil {
@@ -46,10 +54,14 @@ func TestCreateUser_ReturnErrorOnEmptyFirstName(t *testing.T) {
 		ImageURL: "https://test.png",
 		LastName: "Last Name",
 		Username: "+97312345678",
+		Password: "potato",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	service := usersvc.NewService(mockRepo)
+	mockHasher := mocks.NewHasher(t)
+	mockIJWT := mocks.NewIJWTManager(t)
+
+	service := usersvc.NewService(mockRepo, mockHasher, mockIJWT)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -65,7 +77,10 @@ func TestCreateUser_ReturnErrorOnEmptyUsername(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	service := usersvc.NewService(mockRepo)
+	mockHasher := mocks.NewHasher(t)
+	mockIJWT := mocks.NewIJWTManager(t)
+
+	service := usersvc.NewService(mockRepo, mockHasher, mockIJWT)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -82,7 +97,10 @@ func TestCreateUser_ReturnErrorOnEmptyImageURL(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	service := usersvc.NewService(mockRepo)
+	mockHasher := mocks.NewHasher(t)
+	mockIJWT := mocks.NewIJWTManager(t)
+
+	service := usersvc.NewService(mockRepo, mockHasher, mockIJWT)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -99,7 +117,10 @@ func TestCreateUser_ReturnErrorOnInvalidImageURL(t *testing.T) {
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
-	service := usersvc.NewService(mockRepo)
+	mockHasher := mocks.NewHasher(t)
+	mockIJWT := mocks.NewIJWTManager(t)
+
+	service := usersvc.NewService(mockRepo, mockHasher, mockIJWT)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -113,12 +134,18 @@ func TestCreateUser_ReturnError(t *testing.T) {
 		FirstName: "First Name",
 		LastName:  "Last Name",
 		Username:  "+97312345678",
+		Password:  "potato",
 	}
 
 	mockRepo := mocks.NewUserRepository(t)
 	mockRepo.EXPECT().CreateUser(mock.Anything, mock.Anything).Return(errors.New("error"))
 
-	service := usersvc.NewService(mockRepo)
+	mockHasher := mocks.NewHasher(t)
+	mockHasher.EXPECT().Hash(userInput.Password).Return([]byte(userInput.Password), nil)
+
+	mockIJWT := mocks.NewIJWTManager(t)
+
+	service := usersvc.NewService(mockRepo, mockHasher, mockIJWT)
 
 	if _, err := service.CreateUser(ctx, userInput); err == nil {
 		t.Fatalf("Expected error got %v", err)
@@ -144,7 +171,10 @@ func TestGetUser_ReturnUser(t *testing.T) {
 		LastName:  expectedUser.LastName,
 		Username:  expectedUser.Username,
 	}, nil)
-	service := usersvc.NewService(mockRepo)
+	mockHasher := mocks.NewHasher(t)
+	mockIJWT := mocks.NewIJWTManager(t)
+
+	service := usersvc.NewService(mockRepo, mockHasher, mockIJWT)
 
 	usr, err := service.GetUser(ctx, userID)
 	if err != nil {

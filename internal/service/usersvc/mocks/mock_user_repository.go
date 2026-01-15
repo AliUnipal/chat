@@ -161,3 +161,69 @@ func (_c *UserRepository_GetUser_Call) RunAndReturn(run func(ctx context.Context
 	_c.Call.Return(run)
 	return _c
 }
+
+// GetUserByUsername provides a mock function for the type UserRepository
+func (_mock *UserRepository) GetUserByUsername(ctx context.Context, username string) (userrepos.User, error) {
+	ret := _mock.Called(ctx, username)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByUsername")
+	}
+
+	var r0 userrepos.User
+	var r1 error
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) (userrepos.User, error)); ok {
+		return returnFunc(ctx, username)
+	}
+	if returnFunc, ok := ret.Get(0).(func(context.Context, string) userrepos.User); ok {
+		r0 = returnFunc(ctx, username)
+	} else {
+		r0 = ret.Get(0).(userrepos.User)
+	}
+	if returnFunc, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = returnFunc(ctx, username)
+	} else {
+		r1 = ret.Error(1)
+	}
+	return r0, r1
+}
+
+// UserRepository_GetUserByUsername_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByUsername'
+type UserRepository_GetUserByUsername_Call struct {
+	*mock.Call
+}
+
+// GetUserByUsername is a helper method to define mock.On call
+//   - ctx context.Context
+//   - username string
+func (_e *UserRepository_Expecter) GetUserByUsername(ctx interface{}, username interface{}) *UserRepository_GetUserByUsername_Call {
+	return &UserRepository_GetUserByUsername_Call{Call: _e.mock.On("GetUserByUsername", ctx, username)}
+}
+
+func (_c *UserRepository_GetUserByUsername_Call) Run(run func(ctx context.Context, username string)) *UserRepository_GetUserByUsername_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		var arg0 context.Context
+		if args[0] != nil {
+			arg0 = args[0].(context.Context)
+		}
+		var arg1 string
+		if args[1] != nil {
+			arg1 = args[1].(string)
+		}
+		run(
+			arg0,
+			arg1,
+		)
+	})
+	return _c
+}
+
+func (_c *UserRepository_GetUserByUsername_Call) Return(user userrepos.User, err error) *UserRepository_GetUserByUsername_Call {
+	_c.Call.Return(user, err)
+	return _c
+}
+
+func (_c *UserRepository_GetUserByUsername_Call) RunAndReturn(run func(ctx context.Context, username string) (userrepos.User, error)) *UserRepository_GetUserByUsername_Call {
+	_c.Call.Return(run)
+	return _c
+}

@@ -79,7 +79,7 @@ func main() {
 	}()
 
 	userRepo := pquserrepo.Must(ctx, conn)
-	userSvc := usersvc.NewService(userRepo)
+	userSvc := usersvc.NewService(userRepo, nil, nil)
 	defer func() {
 		if err := userRepo.Close(); err != nil {
 			log.Println(err)
