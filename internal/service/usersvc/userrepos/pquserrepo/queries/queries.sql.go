@@ -14,8 +14,8 @@ import (
 )
 
 const createUser = `-- name: CreateUser :exec
-INSERT INTO users (id, image_url, first_name, last_name, username, created_at)
-VALUES ($1, $2, $3, $4, $5, $6)
+INSERT INTO users (id, image_url, first_name, last_name, username, password, created_at)
+VALUES ($1, $2, $3, $4, $5, $6, $7)
 `
 
 type CreateUserParams struct {
@@ -24,13 +24,14 @@ type CreateUserParams struct {
 	FirstName string         `db:"first_name"`
 	LastName  sql.NullString `db:"last_name"`
 	Username  string         `db:"username"`
+	Password  []byte         `db:"password"`
 	CreatedAt time.Time      `db:"created_at"`
 }
 
 // CreateUser
 //
-//	INSERT INTO users (id, image_url, first_name, last_name, username, created_at)
-//	VALUES ($1, $2, $3, $4, $5, $6)
+//	INSERT INTO users (id, image_url, first_name, last_name, username, password, created_at)
+//	VALUES ($1, $2, $3, $4, $5, $6, $7)
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	_, err := q.exec(ctx, q.createUserStmt, createUser,
 		arg.ID,
@@ -38,20 +39,21 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 		arg.FirstName,
 		arg.LastName,
 		arg.Username,
+		arg.Password,
 		arg.CreatedAt,
 	)
 	return err
 }
 
 const getUser = `-- name: GetUser :one
-SELECT id, image_url, first_name, last_name, username, created_at
+SELECT id, image_url, first_name, last_name, username, created_at, password
 FROM users
 WHERE id = $1
 `
 
 // GetUser
 //
-//	SELECT id, image_url, first_name, last_name, username, created_at
+//	SELECT id, image_url, first_name, last_name, username, created_at, password
 //	FROM users
 //	WHERE id = $1
 func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
@@ -64,6 +66,33 @@ func (q *Queries) GetUser(ctx context.Context, id uuid.UUID) (User, error) {
 		&i.LastName,
 		&i.Username,
 		&i.CreatedAt,
+		&i.Password,
+	)
+	return i, err
+}
+
+const getUserByUsername = `-- name: GetUserByUsername :one
+SELECT id, image_url, first_name, last_name, username, created_at, password
+FROM users
+WHERE username = $1
+`
+
+// GetUserByUsername
+//
+//	SELECT id, image_url, first_name, last_name, username, created_at, password
+//	FROM users
+//	WHERE username = $1
+func (q *Queries) GetUserByUsername(ctx context.Context, username string) (User, error) {
+	row := q.queryRow(ctx, q.getUserByUsernameStmt, getUserByUsername, username)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.ImageUrl,
+		&i.FirstName,
+		&i.LastName,
+		&i.Username,
+		&i.CreatedAt,
+		&i.Password,
 	)
 	return i, err
 }

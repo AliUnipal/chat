@@ -141,7 +141,16 @@ type (
 		ChatID     string `http_path:"id"`
 		parsedUUID uuid.UUID
 	}
-	GetMessagesResponse []message.Message
+	GetMessageResponse struct {
+		ID        uuid.UUID `json:"id"`
+		SenderID  uuid.UUID `json:"senderID"`
+		ChatID    uuid.UUID `json:"chatID"`
+		Content   string    `json:"content"`
+		Timestamp int64     `json:"timestamp"`
+	}
+	GetMessagesResponse struct {
+		Messages []GetMessageResponse `json:"data"`
+	}
 )
 
 func (r *GetMessagesRequest) validate(ctx context.Context) error {
@@ -177,5 +186,19 @@ func (m *messageController) GetMessages(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	httpsrv.RespondWithJSON(ctx, w, GetMessagesResponse(messages))
+	resp := GetMessagesResponse{
+		Messages: []GetMessageResponse{},
+	}
+
+	for _, m := range messages {
+		resp.Messages = append(resp.Messages, GetMessageResponse{
+			ID:        m.ID,
+			SenderID:  m.SenderID,
+			ChatID:    m.ChatID,
+			Content:   string(m.Content),
+			Timestamp: m.Timestamp.Unix(),
+		})
+	}
+
+	httpsrv.RespondWithJSON(ctx, w, resp)
 }

@@ -2,6 +2,7 @@ package bootstrapper
 
 import (
 	"context"
+	"crypto/rsa"
 	"database/sql"
 
 	"github.com/AliUnipal/chat/internal/models/chat"
@@ -19,7 +20,7 @@ import (
 // New initializes a new bootstrapper with a database connection using the provided database URL.
 // Returns a pointer to the bootstrapper or an error if the connection or ping fails.
 // The caller is responsible for closing the connection.
-func New(dbUrl string) (*bootstrapper, error) {
+func New(dbUrl string, jwtPrivKey *rsa.PrivateKey, jwtPubKey *rsa.PublicKey) (*bootstrapper, error) {
 	conn, err := sql.Open("postgres", dbUrl)
 	if err != nil {
 		return nil, err
@@ -31,12 +32,17 @@ func New(dbUrl string) (*bootstrapper, error) {
 	}
 
 	return &bootstrapper{
-		dbConn: conn,
+		dbConn:     conn,
+		jwtPrivKey: jwtPrivKey,
+		jwtPubKey:  jwtPubKey,
 	}, nil
 }
 
 type bootstrapper struct {
-	dbConn *sql.DB
+	dbConn     *sql.DB
+	jwtPrivKey *rsa.PrivateKey
+	jwtPubKey  *rsa.PublicKey
+	sess       sessionManager
 }
 
 func (bs *bootstrapper) Close() error {
@@ -46,6 +52,7 @@ func (bs *bootstrapper) Close() error {
 type userService interface {
 	CreateUser(ctx context.Context, in usersvc.CreateUserInput) (uuid.UUID, error)
 	GetUser(ctx context.Context, id uuid.UUID) (user.User, error)
+	Authenticate(ctx context.Context, username, password string) (usersvc.AuthenticateOutput, error)
 }
 
 type chatService interface {
@@ -58,14 +65,29 @@ type messageService interface {
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error)
 }
 
+type sessionManager interface {
+	CreateToken(ctx context.Context, u user.User) (string, error)
+	VerifyToken(ctx context.Context, token string) (uuid.UUID, error)
+}
+
 func (bs *bootstrapper) NewChatService(ctx context.Context) chatService {
 	chatRepo := pqchatrepo.Must(ctx, bs.dbConn)
 	return chatsvc.NewService(chatRepo)
 }
 
+func (bs *bootstrapper) NewSessionManager(_ context.Context) sessionManager {
+	if bs.sess == nil {
+		bs.sess = usersvc.NewJwtManager(bs.jwtPrivKey, bs.jwtPubKey)
+	}
+
+	return bs.sess
+}
+
 func (bs *bootstrapper) NewUserService(ctx context.Context) userService {
 	userSrv := pquserrepo.Must(ctx, bs.dbConn)
-	return usersvc.NewService(userSrv)
+	hasher := usersvc.NewHasher()
+	sess := bs.NewSessionManager(ctx)
+	return usersvc.NewService(userSrv, hasher, sess)
 }
 
 func (bs *bootstrapper) NewMessageService(ctx context.Context) messageService {

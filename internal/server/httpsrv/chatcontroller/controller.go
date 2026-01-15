@@ -3,7 +3,6 @@ package chatcontroller
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"net/http"
 
@@ -19,12 +18,17 @@ type chatService interface {
 	GetChats(ctx context.Context, userID uuid.UUID) ([]chat.Chat, error)
 }
 
-type chatController struct {
-	chatSvc chatService
+type userAccessor interface {
+	CurrentUserID(ctx context.Context) (uuid.UUID, bool)
 }
 
-func New(chatSvc chatService) *chatController {
-	return &chatController{chatSvc}
+type chatController struct {
+	chatSvc chatService
+	userAcc userAccessor
+}
+
+func New(chatSvc chatService, userAcc userAccessor) *chatController {
+	return &chatController{chatSvc, userAcc}
 }
 
 type (
@@ -58,7 +62,6 @@ func (c *chatController) CreateChat(w http.ResponseWriter, r *http.Request) {
 
 type (
 	GetChatsRequest struct {
-		UserID     string `http_query:"userID"`
 		parsedUUID uuid.UUID
 	}
 	GetChatResponse struct {
@@ -68,35 +71,20 @@ type (
 		ImageUrl string `json:"imageUrl"`
 	}
 	GetChatsResponse struct {
-		Chats []GetChatResponse `json:"chats"`
+		Chats []GetChatResponse `json:"data"`
 	}
 )
 
-func (r *GetChatsRequest) validate(ctx context.Context) error {
-	if r.UserID == "" {
-		slog.ErrorContext(ctx, "id is required", "error")
-		return errors.New("id is required")
-	}
-
-	userID, err := uuid.Parse(r.UserID)
-	if err != nil {
-		slog.ErrorContext(ctx, "invalid uuid", "error", err)
-		return server.ErrInvalidUUID
-	}
-
-	r.parsedUUID = userID
-	return nil
-}
-
 func (c *chatController) GetChats(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := GetChatsRequest{
-		UserID: r.URL.Query().Get("userID"),
+	usrId, ok := c.userAcc.CurrentUserID(ctx)
+	if !ok {
+		httpsrv.RespondWithAuthenticationError(ctx, w, errcodes.Unauthenticated)
+		return
 	}
 
-	if err := req.validate(ctx); err != nil {
-		httpsrv.RespondWithBadRequestError(ctx, w, errcodes.InvalidUUID, err)
-		return
+	req := GetChatsRequest{
+		parsedUUID: usrId,
 	}
 
 	chats, err := c.chatSvc.GetChats(r.Context(), req.parsedUUID)
@@ -104,7 +92,9 @@ func (c *chatController) GetChats(w http.ResponseWriter, r *http.Request) {
 		httpsrv.RespondWithError(ctx, w, errcodes.ServiceError, err)
 		return
 	}
-	var resp GetChatsResponse
+	resp := GetChatsResponse{
+		Chats: []GetChatResponse{},
+	}
 
 	for _, c := range chats {
 		resp.Chats = append(resp.Chats, GetChatResponse{

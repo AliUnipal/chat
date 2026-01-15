@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/server"
@@ -18,6 +19,7 @@ import (
 type userService interface {
 	CreateUser(ctx context.Context, in usersvc.CreateUserInput) (uuid.UUID, error)
 	GetUser(ctx context.Context, id uuid.UUID) (user.User, error)
+	Authenticate(ctx context.Context, username, password string) (usersvc.AuthenticateOutput, error)
 }
 
 type userController struct {
@@ -28,24 +30,26 @@ func New(userService userService) *userController {
 	return &userController{userService}
 }
 
-type (
-	CreateUserRequest struct {
-		ImageURL  string `json:"imageURL"`
-		FirstName string `json:"firstName"`
-		LastName  string `json:"lastName"`
-		Username  string `json:"username"`
-	}
-	validationErrors   map[string]string
-	CreateUserResponse struct {
-		UserID uuid.UUID `json:"userID"`
-	}
-)
+type validationErrors map[string]string
 
 func (v validationErrors) Error() string {
 	return "validation errors"
 }
 
-func (c *CreateUserRequest) validateAndDecode(ctx context.Context, r *http.Request) error {
+type (
+	CreateUserRequest struct {
+		ImageURL  string `json:"imageURL"`
+		FirstName string `json:"firstName"`
+		LastName  string `json:"lastName,omitempty"`
+		Username  string `json:"username"`
+		Password  string `json:"password"`
+	}
+	CreateUserResponse struct {
+		UserID uuid.UUID `json:"userID"`
+	}
+)
+
+func (c *CreateUserRequest) decodeAndValidate(ctx context.Context, r *http.Request) error {
 	if err := json.NewDecoder(r.Body).Decode(&c); err != nil {
 		slog.ErrorContext(ctx, "failed to decode request CreateUserRequest", "error", err)
 		return err
@@ -59,11 +63,11 @@ func (c *CreateUserRequest) validateAndDecode(ctx context.Context, r *http.Reque
 	if c.FirstName == "" {
 		errs["firstName"] = "required"
 	}
-	if c.LastName == "" {
-		errs["lastName"] = "required"
-	}
 	if c.Username == "" {
 		errs["username"] = "required"
+	}
+	if c.Password == "" {
+		errs["password"] = "required"
 	}
 
 	if len(errs) > 0 {
@@ -84,7 +88,7 @@ func (u *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
 	//	return
 	//}
 
-	err := req.validateAndDecode(ctx, r)
+	err := req.decodeAndValidate(ctx, r)
 	if err != nil {
 		if fieldErrs, ok := err.(validationErrors); ok {
 			var kvs httpsrv.KVs
@@ -106,6 +110,7 @@ func (u *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
 		FirstName: req.FirstName,
 		LastName:  req.LastName,
 		Username:  req.Username,
+		Password:  req.Password,
 	})
 	if err != nil {
 		httpsrv.RespondWithError(ctx, w, errcodes.ServiceError, err)
@@ -120,7 +125,13 @@ type (
 		ID         string `http_path:"id"`
 		parsedUUID uuid.UUID
 	}
-	GetUserResponse user.User
+	GetUserResponse struct {
+		ID        uuid.UUID `json:"id"`
+		ImageURL  string    `json:"imageURL"`
+		FirstName string    `json:"firstName"`
+		LastName  string    `json:"lastName"`
+		Username  string    `json:"username"`
+	}
 )
 
 func (r *GetUserRequest) validate(ctx context.Context) error {
@@ -155,4 +166,77 @@ func (u *userController) GetUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	httpsrv.RespondWithJSON(ctx, w, GetUserResponse(usr))
+}
+
+type (
+	LoginRequest struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	LoginResponse struct {
+		ID        uuid.UUID `json:"ID"`
+		ImageURL  string    `json:"imageURL"`
+		FirstName string    `json:"firstName"`
+		LastName  string    `json:"lastName"`
+		Username  string    `json:"username"`
+	}
+)
+
+func (l *LoginRequest) decodeAndValidate(ctx context.Context, r *http.Request) error {
+	if err := json.NewDecoder(r.Body).Decode(&l); err != nil {
+		slog.ErrorContext(ctx, "failed to decode request LoginRequest", "error", err)
+		return err
+	}
+	errs := validationErrors{}
+
+	if l.Username == "" {
+		errs["username"] = "required"
+	}
+	if l.Password == "" {
+		errs["password"] = "required"
+	}
+
+	if len(errs) > 0 {
+		return errs
+	}
+
+	return nil
+}
+
+func (u *userController) Login(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	req := LoginRequest{}
+
+	if err := req.decodeAndValidate(ctx, r); err != nil {
+		var fieldErrs validationErrors
+		if errors.As(err, &fieldErrs) {
+			var kvs httpsrv.KVs
+
+			for field, errMsg := range fieldErrs {
+				kvs = append(kvs, httpsrv.KV(field, errMsg))
+			}
+
+			httpsrv.RespondWithValidationError(ctx, w, errcodes.InvalidInput, kvs...)
+			return
+		}
+
+		httpsrv.RespondWithError(ctx, w, errcodes.InvalidInput, err)
+		return
+	}
+
+	out, err := u.userService.Authenticate(ctx, req.Username, req.Password)
+	if err != nil {
+		httpsrv.RespondWithError(ctx, w, errcodes.ServiceError, err)
+		return
+	}
+
+	http.SetCookie(w, &http.Cookie{
+		Name:     "auth_token",
+		Value:    out.Token,
+		HttpOnly: true,
+		SameSite: http.SameSiteStrictMode,
+		Secure:   true,
+		MaxAge:   int(time.Hour.Seconds()),
+	})
+	httpsrv.RespondWithJSON(ctx, w, LoginResponse(out.User))
 }

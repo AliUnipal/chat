@@ -42,7 +42,7 @@ func (q *Queries) CreateChat(ctx context.Context, arg CreateChatParams) error {
 
 const getChat = `-- name: GetChat :one
 SELECT
-    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
+    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u1.password, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at, u2.password
 FROM chats AS c
          JOIN users AS u1 ON c.user_one_id = u1.id
          JOIN users AS u2 ON c.user_two_id = u2.id
@@ -58,7 +58,7 @@ type GetChatRow struct {
 // GetChat
 //
 //	SELECT
-//	    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
+//	    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u1.password, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at, u2.password
 //	FROM chats AS c
 //	         JOIN users AS u1 ON c.user_one_id = u1.id
 //	         JOIN users AS u2 ON c.user_two_id = u2.id
@@ -77,19 +77,21 @@ func (q *Queries) GetChat(ctx context.Context, id uuid.UUID) (GetChatRow, error)
 		&i.User.LastName,
 		&i.User.Username,
 		&i.User.CreatedAt,
+		&i.User.Password,
 		&i.User_2.ID,
 		&i.User_2.ImageUrl,
 		&i.User_2.FirstName,
 		&i.User_2.LastName,
 		&i.User_2.Username,
 		&i.User_2.CreatedAt,
+		&i.User_2.Password,
 	)
 	return i, err
 }
 
 const getChatsByUser = `-- name: GetChatsByUser :many
 SELECT
-    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
+    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u1.password, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at, u2.password
 FROM chats AS c
 JOIN users AS u1 ON c.user_one_id = u1.id
 JOIN users AS u2 ON c.user_two_id = u2.id
@@ -105,7 +107,7 @@ type GetChatsByUserRow struct {
 // GetChatsByUser
 //
 //	SELECT
-//	    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at
+//	    c.id, c.user_one_id, c.user_two_id, c.created_at, u1.id, u1.image_url, u1.first_name, u1.last_name, u1.username, u1.created_at, u1.password, u2.id, u2.image_url, u2.first_name, u2.last_name, u2.username, u2.created_at, u2.password
 //	FROM chats AS c
 //	JOIN users AS u1 ON c.user_one_id = u1.id
 //	JOIN users AS u2 ON c.user_two_id = u2.id
@@ -130,12 +132,14 @@ func (q *Queries) GetChatsByUser(ctx context.Context, userOneID uuid.UUID) ([]Ge
 			&i.User.LastName,
 			&i.User.Username,
 			&i.User.CreatedAt,
+			&i.User.Password,
 			&i.User_2.ID,
 			&i.User_2.ImageUrl,
 			&i.User_2.FirstName,
 			&i.User_2.LastName,
 			&i.User_2.Username,
 			&i.User_2.CreatedAt,
+			&i.User_2.Password,
 		); err != nil {
 			return nil, err
 		}

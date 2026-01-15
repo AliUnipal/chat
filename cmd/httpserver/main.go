@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	"crypto/rsa"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -9,22 +10,32 @@ import (
 	"log/slog"
 	"net"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"os/signal"
 	"time"
 
 	"github.com/AliUnipal/chat/internal/bootstrapper"
+	"github.com/AliUnipal/chat/internal/models/user"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/chatcontroller"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/messagecontroller"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/usercontroller"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/google/uuid"
 	_ "github.com/lib/pq"
 )
 
 type ctxKey string
 
 const (
-	srvCtx ctxKey = "serverContext"
+	srvCtxKey    ctxKey = "serverContext"
+	userIdCtxKey ctxKey = "userIdContext"
 )
+
+type sessionManager interface {
+	CreateToken(ctx context.Context, u user.User) (string, error)
+	VerifyToken(ctx context.Context, token string) (uuid.UUID, error)
+}
 
 type chatController interface {
 	CreateChat(w http.ResponseWriter, r *http.Request)
@@ -34,6 +45,7 @@ type chatController interface {
 type userController interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
 	GetUser(w http.ResponseWriter, r *http.Request)
+	Login(w http.ResponseWriter, r *http.Request)
 }
 
 type messageController interface {
@@ -41,16 +53,42 @@ type messageController interface {
 	GetMessages(w http.ResponseWriter, r *http.Request)
 }
 
+type contextAccessor struct {
+}
+
+func (ca *contextAccessor) CurrentUserID(ctx context.Context) (uuid.UUID, bool) {
+	id, ok := ctx.Value(userIdCtxKey).(uuid.UUID)
+	return id, ok
+}
+
 type server struct {
 	srv               *http.Server
+	sess              sessionManager
 	chatController    chatController
 	userController    userController
 	messageController messageController
 }
 
+func logMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		slog.InfoContext(ctx, "Request received", "method", r.Method, "path", r.URL.Path)
+		rec := httptest.NewRecorder()
+
+		next.ServeHTTP(rec, r)
+		slog.InfoContext(ctx, "Request processed", "status", rec.Code, "body", rec.Body.String())
+		for k, v := range rec.Header() {
+			w.Header()[k] = v
+		}
+		w.WriteHeader(rec.Code)
+		w.Write(rec.Body.Bytes())
+	})
+}
+
 func NewServer(
 	ctx context.Context,
 	port int,
+	sess sessionManager,
 	chatController chatController,
 	userController userController,
 	messageController messageController,
@@ -59,6 +97,9 @@ func NewServer(
 		panic(fmt.Sprintf("Invalid port number: %d", port))
 	}
 
+	if sess == nil {
+		panic("Session manager cannot be nil")
+	}
 	if chatController == nil {
 		panic("Chat controller cannot be nil")
 	}
@@ -73,12 +114,13 @@ func NewServer(
 		Addr:    fmt.Sprintf(":%d", port),
 		Handler: http.NewServeMux(),
 		BaseContext: func(net.Listener) context.Context {
-			return context.WithValue(ctx, srvCtx, "chatServer")
+			return context.WithValue(ctx, srvCtxKey, "chatServer")
 		},
 	}
 
 	s := &server{
 		srv,
+		sess,
 		chatController,
 		userController,
 		messageController,
@@ -87,20 +129,44 @@ func NewServer(
 	return s
 }
 
+func (s *server) authMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ctx := r.Context()
+		token, err := r.Cookie("auth_token")
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to get cookie", "error", err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		id, err := s.sess.VerifyToken(ctx, token.Value)
+		if err != nil {
+			slog.ErrorContext(ctx, "failed to get session", "error", err)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+		ctx = context.WithValue(ctx, userIdCtxKey, id)
+		r = r.WithContext(ctx)
+
+		next.ServeHTTP(w, r)
+	})
+}
+
 func (s *server) registerHandlers() {
 	mux, ok := s.srv.Handler.(*http.ServeMux)
 	if !ok {
 		panic("Handler is not of type *http.ServeMux")
 	}
 
-	mux.HandleFunc("POST /chats", s.chatController.CreateChat)
-	mux.HandleFunc("GET /chats", s.chatController.GetChats)
+	mux.HandleFunc("POST /chats", s.authenticated(s.chatController.CreateChat))
+	mux.HandleFunc("GET /chats", s.authenticated(s.chatController.GetChats))
 
 	mux.HandleFunc("POST /users", s.userController.CreateUser)
-	mux.HandleFunc("GET /users/{id}", s.userController.GetUser)
+	mux.HandleFunc("GET /users/{id}", s.authenticated(s.userController.GetUser))
+	mux.HandleFunc("POST /login", s.userController.Login)
 
-	mux.HandleFunc("POST /chats/{id}/messages", s.messageController.CreateMessage)
-	mux.HandleFunc("GET /chats/{id}/messages", s.messageController.GetMessages)
+	mux.HandleFunc("POST /chats/{id}/messages", s.authenticated(s.messageController.CreateMessage))
+	mux.HandleFunc("GET /chats/{id}/messages", s.authenticated(s.messageController.GetMessages))
 
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -139,7 +205,12 @@ func main() {
 	if dbUrl == "" {
 		log.Fatal("DB_URL is not found in the environment")
 	}
-	bs, err := bootstrapper.New(dbUrl)
+	privKey, pubKey, err := loadJWTKeys()
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	bs, err := bootstrapper.New(dbUrl, privKey, pubKey)
 	if err != nil {
 		log.Fatal(err)
 	}
@@ -150,7 +221,7 @@ func main() {
 	}()
 
 	chatSvc := bs.NewChatService(ctx)
-	chatController := chatcontroller.New(chatSvc)
+	chatController := chatcontroller.New(chatSvc, &contextAccessor{})
 
 	userSvc := bs.NewUserService(ctx)
 	userController := usercontroller.New(userSvc)
@@ -158,7 +229,7 @@ func main() {
 	msgSvc := bs.NewMessageService(ctx)
 	msgController := messagecontroller.New(msgSvc)
 
-	srv := NewServer(ctx, 8080, chatController, userController, msgController)
+	srv := NewServer(ctx, 8080, bs.NewSessionManager(ctx), chatController, userController, msgController)
 	go func() {
 		if err := srv.Start(); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {
@@ -185,4 +256,61 @@ func main() {
 	if err := srv.Shutdown(ctx); err != nil {
 		slog.Error("Server shutdown failed", "error", err)
 	}
+}
+
+// With applies the given middlewares to the given handler in the order they
+// are given. That means that the first middleware is the outermost one.
+func With(
+	handler http.Handler,
+	middlewares ...func(http.Handler) http.Handler,
+) http.Handler {
+	// Do this in reverse order so that the first middleware is the outermost one
+	if len(middlewares) == 0 {
+		return handler
+	}
+
+	for i := len(middlewares) - 1; i >= 0; i-- {
+		if m := middlewares[i]; m != nil {
+			if h := m(handler); h != nil {
+				handler = h
+			}
+		}
+	}
+
+	return handler
+}
+
+func WithHandlerFunc(
+	handler http.HandlerFunc,
+	middlewares ...func(http.Handler) http.Handler,
+) http.HandlerFunc {
+	return With(handler, middlewares...).ServeHTTP
+}
+
+func (s *server) authenticated(h http.HandlerFunc) http.HandlerFunc {
+	return WithHandlerFunc(h, s.authMiddleware)
+}
+
+func loadJWTKeys() (*rsa.PrivateKey, *rsa.PublicKey, error) {
+	privKeyData, err := os.ReadFile(os.Getenv("JWT_PRIVATE_KEY"))
+	if err != nil {
+		return &rsa.PrivateKey{}, &rsa.PublicKey{}, err
+	}
+
+	pubKeyData, err := os.ReadFile(os.Getenv("JWT_PUBLIC_KEY"))
+	if err != nil {
+		return &rsa.PrivateKey{}, &rsa.PublicKey{}, err
+	}
+
+	privKey, err := jwt.ParseRSAPrivateKeyFromPEM(privKeyData)
+	if err != nil {
+		return &rsa.PrivateKey{}, &rsa.PublicKey{}, err
+	}
+
+	pubKey, err := jwt.ParseRSAPublicKeyFromPEM(pubKeyData)
+	if err != nil {
+		return &rsa.PrivateKey{}, &rsa.PublicKey{}, err
+	}
+
+	return privKey, pubKey, nil
 }

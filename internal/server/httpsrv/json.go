@@ -26,6 +26,8 @@ func httpCode(ctx context.Context, typ ErrorType) int {
 		return http.StatusBadRequest
 	case BadRequestError:
 		return http.StatusBadRequest
+	case AuthenticationError:
+		return http.StatusUnauthorized
 	default:
 		slog.ErrorContext(ctx, "unknown error type", "type", typ)
 		return http.StatusInternalServerError
@@ -63,6 +65,14 @@ func RespondWithBadRequestError(ctx context.Context, w http.ResponseWriter, code
 		Type:    BadRequestError,
 		Code:    code,
 		Message: err.Error(),
+	})
+}
+
+func RespondWithAuthenticationError(ctx context.Context, w http.ResponseWriter, code string) {
+	respond(ctx, w, httpCode(ctx, AuthenticationError), errorResponse[struct{}]{
+		Type:    AuthenticationError,
+		Code:    code,
+		Message: "unauthenticated",
 	})
 }
 
