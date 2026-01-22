@@ -3,23 +3,31 @@ package msgsvc_test
 import (
 	"bytes"
 	"errors"
+	"testing"
+	"time"
+
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/service/msgsvc"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/mocks"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
-	"testing"
-	"time"
 )
 
-func TestCreateMessage_ReturnID(t *testing.T) {
+func TestCreateMessage_ReturnMsg(t *testing.T) {
 	ctx := t.Context()
 	input := msgsvc.MessageInput{
 		SenderID:    uuid.New(),
 		ChatID:      uuid.New(),
 		Content:     []byte("Hello Hello"),
 		ContentType: message.TextContentType,
+	}
+
+	expectedMsg := message.Message{
+		ChatID:      input.ChatID,
+		SenderID:    input.SenderID,
+		Content:     input.Content,
+		ContentType: input.ContentType,
 	}
 
 	mockRepo := mocks.NewMessageRepository(t)
@@ -33,12 +41,17 @@ func TestCreateMessage_ReturnID(t *testing.T) {
 
 	service := msgsvc.NewService(mockRepo)
 
-	id, err := service.CreateMessage(ctx, input)
+	msg, err := service.CreateMessage(ctx, input)
 	if err != nil {
 		t.Fatalf("expected no error got %v", err)
 	}
-	if id == uuid.Nil {
-		t.Fatalf("expected id got %v", id)
+	if msg.ID == uuid.Nil ||
+		msg.ChatID != expectedMsg.ChatID ||
+		msg.SenderID != expectedMsg.SenderID ||
+		msg.ContentType != expectedMsg.ContentType ||
+		!bytes.Equal(msg.Content, expectedMsg.Content) ||
+		msg.Timestamp.IsZero() {
+		t.Fatalf("expected msg %v got %v", expectedMsg, msg)
 	}
 }
 

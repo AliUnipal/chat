@@ -41,22 +41,24 @@ func (_m *MessageService) EXPECT() *MessageService_Expecter {
 }
 
 // CreateMessage provides a mock function for the type MessageService
-func (_mock *MessageService) CreateMessage(ctx context.Context, in msgsvc.MessageInput) (message.Message, error) {
+func (_mock *MessageService) CreateMessage(ctx context.Context, in msgsvc.MessageInput) (uuid.UUID, error) {
 	ret := _mock.Called(ctx, in)
 
 	if len(ret) == 0 {
 		panic("no return value specified for CreateMessage")
 	}
 
-	var r0 message.Message
+	var r0 uuid.UUID
 	var r1 error
-	if returnFunc, ok := ret.Get(0).(func(context.Context, msgsvc.MessageInput) (message.Message, error)); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, msgsvc.MessageInput) (uuid.UUID, error)); ok {
 		return returnFunc(ctx, in)
 	}
-	if returnFunc, ok := ret.Get(0).(func(context.Context, msgsvc.MessageInput) message.Message); ok {
+	if returnFunc, ok := ret.Get(0).(func(context.Context, msgsvc.MessageInput) uuid.UUID); ok {
 		r0 = returnFunc(ctx, in)
 	} else {
-		r0 = ret.Get(0).(message.Message)
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(uuid.UUID)
+		}
 	}
 	if returnFunc, ok := ret.Get(1).(func(context.Context, msgsvc.MessageInput) error); ok {
 		r1 = returnFunc(ctx, in)
@@ -96,12 +98,12 @@ func (_c *MessageService_CreateMessage_Call) Run(run func(ctx context.Context, i
 	return _c
 }
 
-func (_c *MessageService_CreateMessage_Call) Return(message1 message.Message, err error) *MessageService_CreateMessage_Call {
-	_c.Call.Return(message1, err)
+func (_c *MessageService_CreateMessage_Call) Return(uUID uuid.UUID, err error) *MessageService_CreateMessage_Call {
+	_c.Call.Return(uUID, err)
 	return _c
 }
 
-func (_c *MessageService_CreateMessage_Call) RunAndReturn(run func(ctx context.Context, in msgsvc.MessageInput) (message.Message, error)) *MessageService_CreateMessage_Call {
+func (_c *MessageService_CreateMessage_Call) RunAndReturn(run func(ctx context.Context, in msgsvc.MessageInput) (uuid.UUID, error)) *MessageService_CreateMessage_Call {
 	_c.Call.Return(run)
 	return _c
 }

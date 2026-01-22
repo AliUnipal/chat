@@ -33,7 +33,7 @@ type chatService interface {
 }
 
 type messageService interface {
-	CreateMessage(ctx context.Context, in msgsvc.MessageInput) (uuid.UUID, error)
+	CreateMessage(ctx context.Context, in msgsvc.MessageInput) (message.Message, error)
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error)
 }
 
