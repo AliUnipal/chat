@@ -17,6 +17,5 @@ type eventType string
 const (
 	createMessageEventType  eventType = "createMessage"
 	receiveMessageEventType           = "receiveMessage"
+	getMessagesEventType              = "getMessages"
 )
-
-type messageCreatedEvent struct{}

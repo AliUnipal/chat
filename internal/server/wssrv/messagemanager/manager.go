@@ -49,6 +49,7 @@ type messageManager struct {
 
 func (m *messageManager) setupEventHandlers() {
 	m.handlers[createMessageEventType] = m.createMessageHandler
+	m.handlers[getMessagesEventType] = m.getMessagesHandler
 }
 
 func (m *messageManager) routeEvent(ctx context.Context, e event, c *client) error {
@@ -272,6 +273,49 @@ func (m *messageManager) createMessageHandler(ctx context.Context, e event, c *c
 	} else {
 		return errors.New("chat does not exist")
 	}
+
+	return nil
+}
+
+type (
+	// NOTE: will be through the client chatID
+	// TODO: add load more, or length handling etc...
+	GetMessagesRequest struct {
+	}
+	GetMessageResponse struct {
+		ID          uuid.UUID           `json:"id"`
+		SenderID    uuid.UUID           `json:"senderID"`
+		ChatID      uuid.UUID           `json:"chatID"`
+		Content     []byte              `json:"content"`
+		ContentType message.ContentType `json:"contentType"`
+		Timestamp   time.Time           `json:"timestamp"`
+	}
+	GetMessagesEventResponse struct {
+		Type eventType            `json:"type"`
+		Data []GetMessageResponse `json:"data"`
+	}
+)
+
+// NOTE: I think making this function as a loader to get the messages once the user connects would be better.
+//
+//	however, I think it will be a alright to keep it like this to make the client decide whether it's a new empty
+//	chat or loaded!!
+func (m *messageManager) getMessagesHandler(ctx context.Context, e event, c *client) error {
+	messages, err := m.msgSvc.GetMessages(ctx, c.chatID)
+	if err != nil {
+		return err
+	}
+
+	data, err := json.Marshal(messages)
+	if err != nil {
+		return err
+	}
+
+	out := event{
+		Type: getMessagesEventType,
+		Data: data,
+	}
+	c.egress <- out
 
 	return nil
 }
