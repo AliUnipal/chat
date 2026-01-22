@@ -20,6 +20,7 @@ import (
 	"github.com/AliUnipal/chat/internal/server/httpsrv/chatcontroller"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/messagecontroller"
 	"github.com/AliUnipal/chat/internal/server/httpsrv/usercontroller"
+	"github.com/AliUnipal/chat/internal/server/wssrv/messagemanager"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	_ "github.com/lib/pq"
@@ -32,7 +33,7 @@ const (
 	userIdCtxKey ctxKey = "userIdContext"
 )
 
-type sessionManager interface {
+type jwtManager interface {
 	CreateToken(ctx context.Context, u user.User) (string, error)
 	VerifyToken(ctx context.Context, token string) (uuid.UUID, error)
 }
@@ -53,6 +54,10 @@ type messageController interface {
 	GetMessages(w http.ResponseWriter, r *http.Request)
 }
 
+type messageWsManager interface {
+	ServeWS(w http.ResponseWriter, r *http.Request)
+}
+
 type contextAccessor struct {
 }
 
@@ -63,10 +68,11 @@ func (ca *contextAccessor) CurrentUserID(ctx context.Context) (uuid.UUID, bool) 
 
 type server struct {
 	srv               *http.Server
-	sess              sessionManager
+	sess              jwtManager
 	chatController    chatController
 	userController    userController
 	messageController messageController
+	messageWsManager  messageWsManager
 }
 
 func logMiddleware(next http.Handler) http.Handler {
@@ -88,10 +94,11 @@ func logMiddleware(next http.Handler) http.Handler {
 func NewServer(
 	ctx context.Context,
 	port int,
-	sess sessionManager,
+	sess jwtManager,
 	chatController chatController,
 	userController userController,
 	messageController messageController,
+	messageWsManager messageWsManager,
 ) *server {
 	if port <= 0 || port > 65535 {
 		panic(fmt.Sprintf("Invalid port number: %d", port))
@@ -109,6 +116,9 @@ func NewServer(
 	if messageController == nil {
 		panic("Type controller cannot be nil")
 	}
+	if messageWsManager == nil {
+		panic("Message ws manager cannot be nil")
+	}
 
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
@@ -124,6 +134,7 @@ func NewServer(
 		chatController,
 		userController,
 		messageController,
+		messageWsManager,
 	}
 	s.registerHandlers()
 	return s
@@ -167,6 +178,9 @@ func (s *server) registerHandlers() {
 
 	mux.HandleFunc("POST /chats/{id}/messages", s.authenticated(s.messageController.CreateMessage))
 	mux.HandleFunc("GET /chats/{id}/messages", s.authenticated(s.messageController.GetMessages))
+
+	// NOTE: Might not be the correct place but whatever!!!
+	mux.HandleFunc("GET /ws/chats/{id}", s.messageWsManager.ServeWS)
 
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -228,8 +242,16 @@ func main() {
 
 	msgSvc := bs.NewMessageService(ctx)
 	msgController := messagecontroller.New(msgSvc)
+	msgWsManager := messagemanager.New(msgSvc)
 
-	srv := NewServer(ctx, 8080, bs.NewSessionManager(ctx), chatController, userController, msgController)
+	srv := NewServer(
+		ctx, 8080,
+		bs.NewSessionManager(ctx),
+		chatController,
+		userController,
+		msgController,
+		msgWsManager,
+	)
 	go func() {
 		if err := srv.Start(); err != nil {
 			if errors.Is(err, http.ErrServerClosed) {

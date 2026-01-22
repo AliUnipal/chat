@@ -1,8 +1,9 @@
 package message
 
 import (
-	"github.com/google/uuid"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type Message struct {
