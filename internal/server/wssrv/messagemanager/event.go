@@ -12,10 +12,11 @@ type event struct {
 
 type eventHandler func(ctx context.Context, e event, c *client) error
 
-type eventType int
+type eventType string
 
 const (
-	messageCreatedEventType eventType = iota
+	createMessageEventType  eventType = "createMessage"
+	receiveMessageEventType           = "receiveMessage"
 )
 
 type messageCreatedEvent struct{}

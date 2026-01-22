@@ -2,10 +2,13 @@ package messagemanager
 
 import (
 	"context"
+	"encoding/base64"
+	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/service/msgsvc"
@@ -33,7 +36,7 @@ func New(msgSvc messageService) *messageManager {
 }
 
 type messageService interface {
-	CreateMessage(ctx context.Context, in msgsvc.MessageInput) (uuid.UUID, error)
+	CreateMessage(ctx context.Context, in msgsvc.MessageInput) (message.Message, error)
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error)
 }
 
@@ -45,7 +48,7 @@ type messageManager struct {
 }
 
 func (m *messageManager) setupEventHandlers() {
-	m.handlers[messageCreatedEventType] = sendEvent
+	m.handlers[createMessageEventType] = m.createMessageHandler
 }
 
 func (m *messageManager) routeEvent(ctx context.Context, e event, c *client) error {
@@ -54,11 +57,6 @@ func (m *messageManager) routeEvent(ctx context.Context, e event, c *client) err
 	} else {
 		return errors.New("event handler not found")
 	}
-}
-
-func sendEvent(ctx context.Context, e event, c *client) error {
-
-	return nil
 }
 
 type (
@@ -91,7 +89,7 @@ func (m *messageManager) ServeWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		OriginPatterns: []string{"localhost"},
+		OriginPatterns: []string{"localhost:3000"},
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to accept websocket connection", "error", err)
@@ -116,6 +114,9 @@ func (m *messageManager) ServeWS(w http.ResponseWriter, r *http.Request) {
 func (m *messageManager) addClient(_ context.Context, chatID uuid.UUID, c *client) {
 	m.Lock()
 	defer m.Unlock()
+	if _, ok := m.clients[chatID]; !ok {
+		m.clients[chatID] = make(map[*client]bool)
+	}
 	m.clients[chatID][c] = true
 }
 
@@ -145,4 +146,132 @@ func (m *messageManager) removeClient(ctx context.Context, chatID uuid.UUID, c *
 	}
 
 	slog.ErrorContext(ctx, "failed to close websocket connection", "error", err)
+}
+
+// ======================= Handlers =======================
+
+type (
+	CreateMessageRequest struct {
+		SenderID    string              `json:"senderID"`
+		ChatID      string              `json:"chatID"`
+		Content     string              `json:"content"`
+		ContentType message.ContentType `json:"contentType"`
+	}
+	validationErrors           map[string]string
+	parsedCreateMessageRequest struct {
+		senderID    uuid.UUID
+		chatID      uuid.UUID
+		content     []byte
+		contentType message.ContentType
+	}
+	CreateMessageResponse struct {
+		ID          uuid.UUID           `json:"id"`
+		SenderID    uuid.UUID           `json:"senderID"`
+		ChatID      uuid.UUID           `json:"chatID"`
+		Content     []byte              `json:"content"`
+		ContentType message.ContentType `json:"contentType"`
+		Timestamp   time.Time           `json:"timestamp"`
+	}
+	CreateMessageEventResponse struct {
+		Type eventType             `json:"type"`
+		Data CreateMessageResponse `json:"data"`
+	}
+)
+
+func (v validationErrors) Error() string {
+	return "validation errors"
+}
+
+func (c *CreateMessageRequest) validate(ctx context.Context) (parsedCreateMessageRequest, error) {
+	var p parsedCreateMessageRequest
+	errs := validationErrors{}
+
+	if c.SenderID == "" {
+		errs["senderID"] = "required"
+	}
+
+	if c.ChatID == "" {
+		errs["chatID"] = "required"
+	}
+
+	if len(c.Content) == 0 {
+		errs["content"] = "required"
+	}
+
+	// TODO contentType & content validation
+
+	senderId, err := uuid.Parse(c.SenderID)
+	if err != nil {
+		errs["senderID"] = "invalid uuid"
+	}
+	chatId, err := uuid.Parse(c.ChatID)
+	if err != nil {
+		errs["chatID"] = "invalid uuid"
+	}
+	content, err := base64.StdEncoding.DecodeString(c.Content)
+	if err != nil {
+		errs["content"] = "invalid base64"
+	}
+
+	if len(errs) > 0 {
+		slog.ErrorContext(ctx, "validation errors", "errors", errs)
+		return p, errs
+	}
+
+	p.senderID = senderId
+	p.chatID = chatId
+	p.content = content
+
+	return p, nil
+}
+
+func (m *messageManager) createMessageHandler(ctx context.Context, e event, c *client) error {
+	req := CreateMessageRequest{}
+	if err := json.Unmarshal(e.Data, &req); err != nil {
+		// TODO: Error handling
+		return err
+	}
+
+	pReq, err := req.validate(ctx)
+	if err != nil {
+		return err
+	}
+
+	msg, err := m.msgSvc.CreateMessage(ctx, msgsvc.MessageInput{
+		SenderID:    pReq.senderID,
+		ChatID:      pReq.chatID,
+		Content:     pReq.content,
+		ContentType: pReq.contentType,
+	})
+	if err != nil {
+		return err
+	}
+
+	if chat, ok := m.clients[pReq.chatID]; ok {
+		broadMsg := CreateMessageResponse{
+			ID:          msg.ID,
+			SenderID:    msg.SenderID,
+			ChatID:      msg.ChatID,
+			Content:     msg.Content,
+			ContentType: msg.ContentType,
+			Timestamp:   msg.Timestamp,
+		}
+		data, err := json.Marshal(broadMsg)
+		if err != nil {
+			return err
+		}
+
+		out := event{
+			Type: receiveMessageEventType,
+			Data: data,
+		}
+
+		for client := range chat {
+			client.egress <- out
+		}
+	} else {
+		return errors.New("chat does not exist")
+	}
+
+	return nil
 }

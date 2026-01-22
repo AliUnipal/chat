@@ -113,7 +113,7 @@ func (c *client) writeJSON(ctx context.Context, e event) error {
 
 // NOTE: Probably this is not working properly it might need further testing.
 func (c *client) heartbeat(ctx context.Context) error {
-	pctx, cancel := context.WithTimeout(ctx, 1*time.Microsecond)
+	pctx, cancel := context.WithTimeout(ctx, pongWait)
 	defer cancel()
 
 	return c.conn.Ping(pctx)

@@ -7,6 +7,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/server/httpsrv"
@@ -16,7 +17,7 @@ import (
 )
 
 type messageService interface {
-	CreateMessage(ctx context.Context, in msgsvc.MessageInput) (uuid.UUID, error)
+	CreateMessage(ctx context.Context, in msgsvc.MessageInput) (message.Message, error)
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error)
 }
 
@@ -43,7 +44,12 @@ type (
 		contentType message.ContentType
 	}
 	CreateMessageResponse struct {
-		MessageID uuid.UUID `json:"messageID"`
+		ID          uuid.UUID           `json:"id"`
+		SenderID    uuid.UUID           `json:"senderID"`
+		ChatID      uuid.UUID           `json:"chatID"`
+		Content     []byte              `json:"content"`
+		ContentType message.ContentType `json:"contentType"`
+		Timestamp   time.Time           `json:"timestamp"`
 	}
 )
 
@@ -121,7 +127,7 @@ func (m *messageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	id, err := m.messageSvc.CreateMessage(ctx, msgsvc.MessageInput{
+	msg, err := m.messageSvc.CreateMessage(ctx, msgsvc.MessageInput{
 		SenderID:    pReq.senderID,
 		ChatID:      pReq.chatID,
 		Content:     pReq.content,
@@ -133,7 +139,14 @@ func (m *messageController) CreateMessage(w http.ResponseWriter, r *http.Request
 		return
 	}
 
-	httpsrv.RespondWithJSON(ctx, w, CreateMessageResponse{id})
+	httpsrv.RespondWithJSON(ctx, w, CreateMessageResponse{
+		ID:          msg.ID,
+		SenderID:    msg.SenderID,
+		ChatID:      msg.ChatID,
+		Content:     msg.Content,
+		ContentType: msg.ContentType,
+		Timestamp:   msg.Timestamp,
+	})
 }
 
 type (
