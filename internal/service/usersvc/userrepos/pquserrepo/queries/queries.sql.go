@@ -45,7 +45,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) error {
 	return err
 }
 
-const getUser = `-- name: GetUser :one
+const getUser = `-- name: GetUserWithID :one
 SELECT id, image_url, first_name, last_name, username, created_at, password
 FROM users
 WHERE id = $1

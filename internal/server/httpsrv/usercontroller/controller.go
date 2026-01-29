@@ -22,12 +22,17 @@ type userService interface {
 	Authenticate(ctx context.Context, username, password string) (usersvc.AuthenticateOutput, error)
 }
 
-type userController struct {
-	userService userService
+type userAccessor interface {
+	CurrentUserID(ctx context.Context) (uuid.UUID, bool)
 }
 
-func New(userService userService) *userController {
-	return &userController{userService}
+func New(userService userService, userAcc userAccessor) *userController {
+	return &userController{userAcc, userService}
+}
+
+type userController struct {
+	userAcc     userAccessor
+	userService userService
 }
 
 type validationErrors map[string]string
@@ -121,11 +126,11 @@ func (u *userController) CreateUser(w http.ResponseWriter, r *http.Request) {
 }
 
 type (
-	GetUserRequest struct {
+	GetUserWithIDRequest struct {
 		ID         string `http_path:"id"`
 		parsedUUID uuid.UUID
 	}
-	GetUserResponse struct {
+	GetUserWithIDResponse struct {
 		ID        uuid.UUID `json:"id"`
 		ImageURL  string    `json:"imageURL"`
 		FirstName string    `json:"firstName"`
@@ -134,7 +139,7 @@ type (
 	}
 )
 
-func (r *GetUserRequest) validate(ctx context.Context) error {
+func (r *GetUserWithIDRequest) validate(ctx context.Context) error {
 	if r.ID == "" {
 		slog.ErrorContext(ctx, "id is required", "error", "required")
 		return errors.New("id is required")
@@ -150,9 +155,9 @@ func (r *GetUserRequest) validate(ctx context.Context) error {
 	return nil
 }
 
-func (u *userController) GetUser(w http.ResponseWriter, r *http.Request) {
+func (u *userController) GetUserWithID(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	req := GetUserRequest{ID: r.PathValue("id")}
+	req := GetUserWithIDRequest{ID: r.PathValue("id")}
 
 	if err := req.validate(ctx); err != nil {
 		httpsrv.RespondWithBadRequestError(ctx, w, errcodes.InvalidUUID, err)
@@ -165,7 +170,43 @@ func (u *userController) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	httpsrv.RespondWithJSON(ctx, w, GetUserResponse(usr))
+	httpsrv.RespondWithJSON(ctx, w, GetUserWithIDResponse(usr))
+}
+
+type (
+	GetUserRequest struct {
+		ID         string `http_path:"id"`
+		parsedUUID uuid.UUID
+	}
+	userResponse struct {
+		ID        uuid.UUID `json:"id"`
+		ImageURL  string    `json:"imageURL"`
+		FirstName string    `json:"firstName"`
+		LastName  string    `json:"lastName"`
+		Username  string    `json:"username"`
+	}
+	GetUserResponse struct {
+		Data userResponse `json:"data"`
+	}
+)
+
+func (u *userController) GetUser(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	usrID, ok := u.userAcc.CurrentUserID(ctx)
+	if !ok {
+		httpsrv.RespondWithAuthenticationError(ctx, w, errcodes.Unauthenticated)
+		return
+	}
+
+	usr, err := u.userService.GetUser(ctx, usrID)
+	if err != nil {
+		httpsrv.RespondWithError(ctx, w, errcodes.ServiceError, err)
+		return
+	}
+
+	httpsrv.RespondWithJSON(ctx, w, GetUserResponse{
+		Data: userResponse(usr),
+	})
 }
 
 type (
@@ -173,12 +214,16 @@ type (
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-	LoginResponse struct {
-		ID        uuid.UUID `json:"ID"`
+	loginUserResponse struct {
+		ID        uuid.UUID `json:"id"`
 		ImageURL  string    `json:"imageURL"`
 		FirstName string    `json:"firstName"`
 		LastName  string    `json:"lastName"`
 		Username  string    `json:"username"`
+		Token     string    `json:"token"`
+	}
+	LoginResponse struct {
+		Data loginUserResponse `json:"data"`
 	}
 )
 
@@ -233,10 +278,20 @@ func (u *userController) Login(w http.ResponseWriter, r *http.Request) {
 	http.SetCookie(w, &http.Cookie{
 		Name:     "auth_token",
 		Value:    out.Token,
+		Path:     "/",
 		HttpOnly: true,
-		SameSite: http.SameSiteStrictMode,
-		Secure:   true,
-		MaxAge:   int(time.Hour.Seconds()),
+		SameSite: http.SameSiteLaxMode,
+		Secure:   false,
+		MaxAge:   int(10 * time.Hour.Seconds()),
 	})
-	httpsrv.RespondWithJSON(ctx, w, LoginResponse(out.User))
+	httpsrv.RespondWithJSON(ctx, w, LoginResponse{
+		Data: loginUserResponse{
+			ID:        out.User.ID,
+			ImageURL:  out.User.ImageURL,
+			FirstName: out.User.FirstName,
+			LastName:  out.User.LastName,
+			Username:  out.User.Username,
+			Token:     out.Token,
+		},
+	})
 }

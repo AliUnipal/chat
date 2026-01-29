@@ -86,7 +86,7 @@ func (s *service) GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.
 			ChatID:      m.ChatID,
 			Content:     m.Content,
 			ContentType: m.ContentType,
-			Timestamp:   m.Timestamp,
+			Timestamp:   m.CreatedAt,
 		}
 	}
 

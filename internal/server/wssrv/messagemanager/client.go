@@ -17,10 +17,11 @@ var (
 	pingInterval = (pongWait * 9) / 10
 )
 
-func NewClient(conn *websocket.Conn, mng *messageManager, chatID uuid.UUID) *client {
+func NewClient(conn *websocket.Conn, mng *messageManager, userID uuid.UUID, chatID uuid.UUID) *client {
 	return &client{
 		conn:   conn,
 		mng:    mng,
+		userID: userID,
 		chatID: chatID,
 		egress: make(chan event),
 	}
@@ -29,6 +30,7 @@ func NewClient(conn *websocket.Conn, mng *messageManager, chatID uuid.UUID) *cli
 type client struct {
 	conn   *websocket.Conn
 	mng    *messageManager
+	userID uuid.UUID
 	chatID uuid.UUID
 	egress chan event
 }

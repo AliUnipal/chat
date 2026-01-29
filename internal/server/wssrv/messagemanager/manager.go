@@ -2,9 +2,9 @@ package messagemanager
 
 import (
 	"context"
-	"encoding/base64"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"sync"
@@ -23,10 +23,11 @@ var (
 type chatID = uuid.UUID
 type clientsList map[chatID]map[*client]bool
 
-func New(msgSvc messageService) *messageManager {
+func New(msgSvc messageService, userAcc userAccessor) *messageManager {
 	m := &messageManager{
 		msgSvc:   msgSvc,
 		clients:  make(clientsList),
+		userAcc:  userAcc,
 		handlers: make(map[eventType]eventHandler),
 	}
 
@@ -40,9 +41,14 @@ type messageService interface {
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error)
 }
 
+type userAccessor interface {
+	CurrentUserID(ctx context.Context) (uuid.UUID, bool)
+}
+
 type messageManager struct {
 	msgSvc  messageService
 	clients clientsList
+	userAcc userAccessor
 	sync.RWMutex
 	handlers map[eventType]eventHandler
 }
@@ -84,13 +90,19 @@ func (r *ServeMessageRequest) validate(ctx context.Context) error {
 }
 
 func (m *messageManager) ServeWS(w http.ResponseWriter, r *http.Request) {
+	usrID, ok := m.userAcc.CurrentUserID(r.Context())
+	slog.InfoContext(r.Context(), "user connected", "userID", usrID)
+	if !ok {
+		return
+	}
+
 	ctx := context.Background()
 	req := ServeMessageRequest{
 		ChatID: r.PathValue("id"),
 	}
 
 	c, err := websocket.Accept(w, r, &websocket.AcceptOptions{
-		OriginPatterns: []string{"localhost:3000"},
+		OriginPatterns: []string{"localhost:3000", "127.0.0.1:3000"},
 	})
 	if err != nil {
 		slog.ErrorContext(ctx, "failed to accept websocket connection", "error", err)
@@ -105,7 +117,7 @@ func (m *messageManager) ServeWS(w http.ResponseWriter, r *http.Request) {
 	}
 
 	c.SetReadLimit(ReadBufferSize)
-	client := NewClient(c, m, req.parsedUUID)
+	client := NewClient(c, m, usrID, req.parsedUUID)
 
 	m.addClient(ctx, req.parsedUUID, client)
 	go client.readEvents(ctx)
@@ -184,6 +196,9 @@ func (v validationErrors) Error() string {
 }
 
 func (c *CreateMessageRequest) validate(ctx context.Context) (parsedCreateMessageRequest, error) {
+	fmt.Printf("Content raw: %q\n", c.Content)
+	fmt.Printf("Content bytes: %#v\n", []byte(c.Content))
+
 	var p parsedCreateMessageRequest
 	errs := validationErrors{}
 
@@ -209,11 +224,11 @@ func (c *CreateMessageRequest) validate(ctx context.Context) (parsedCreateMessag
 	if err != nil {
 		errs["chatID"] = "invalid uuid"
 	}
-	content, err := base64.StdEncoding.DecodeString(c.Content)
-	if err != nil {
-		errs["content"] = "invalid base64"
-	}
-
+	//content, err := base64.StdEncoding.DecodeString(c.Content)
+	//if err != nil {
+	//	errs["content"] = "invalid base64"
+	//}
+	//fmt.Printf("Content decoded: %v\n", content)
 	if len(errs) > 0 {
 		slog.ErrorContext(ctx, "validation errors", "errors", errs)
 		return p, errs
@@ -221,7 +236,7 @@ func (c *CreateMessageRequest) validate(ctx context.Context) (parsedCreateMessag
 
 	p.senderID = senderId
 	p.chatID = chatId
-	p.content = content
+	p.content = []byte(c.Content)
 
 	return p, nil
 }
@@ -306,7 +321,20 @@ func (m *messageManager) getMessagesHandler(ctx context.Context, e event, c *cli
 		return err
 	}
 
-	data, err := json.Marshal(messages)
+	outMsgs := make([]GetMessageResponse, 0)
+
+	for _, msg := range messages {
+		outMsgs = append(outMsgs, GetMessageResponse{
+			ID:          msg.ID,
+			SenderID:    msg.SenderID,
+			ChatID:      msg.ChatID,
+			Content:     msg.Content,
+			ContentType: msg.ContentType,
+			Timestamp:   msg.Timestamp,
+		})
+	}
+
+	data, err := json.Marshal(outMsgs)
 	if err != nil {
 		return err
 	}

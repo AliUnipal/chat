@@ -3,7 +3,6 @@ package usersvc
 import (
 	"context"
 	"errors"
-	"fmt"
 	"net/url"
 
 	"github.com/AliUnipal/chat/internal/models/user"
@@ -113,7 +112,7 @@ func (s *service) GetUser(ctx context.Context, id uuid.UUID) (user.User, error) 
 
 func (s *service) Authenticate(ctx context.Context, username, password string) (AuthenticateOutput, error) {
 	u, err := s.repo.GetUserByUsername(ctx, username)
-	fmt.Printf("%+v\n", u)
+	//fmt.Printf("%+v\n", u)
 
 	if errors.Is(err, userrepos.ErrNotFound) {
 		_, err := s.hasher.Verify(password, nil)

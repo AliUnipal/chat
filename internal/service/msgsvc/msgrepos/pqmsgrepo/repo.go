@@ -59,10 +59,11 @@ func (r *repo) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Me
 	var msgs []msgrepos.Message
 	for _, m := range dbMsgs {
 		msgs = append(msgs, msgrepos.Message{
-			ID:       m.ID,
-			SenderID: m.SenderID,
-			ChatID:   m.ChatID,
-			Content:  m.Content,
+			ID:        m.ID,
+			SenderID:  m.SenderID,
+			ChatID:    m.ChatID,
+			Content:   m.Content,
+			CreatedAt: m.CreatedAt,
 		})
 	}
 

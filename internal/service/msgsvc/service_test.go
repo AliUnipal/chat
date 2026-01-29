@@ -167,7 +167,7 @@ func TestGetMessages_ReturnMessages(t *testing.T) {
 			ChatID:      msg.ChatID,
 			Content:     msg.Content,
 			ContentType: msg.ContentType,
-			Timestamp:   msg.Timestamp,
+			CreatedAt:   msg.Timestamp,
 		}
 	}
 

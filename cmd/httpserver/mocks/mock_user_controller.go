@@ -84,12 +84,12 @@ func (_c *UserController_CreateUser_Call) RunAndReturn(run func(w http.ResponseW
 }
 
 // GetUser provides a mock function for the type UserController
-func (_mock *UserController) GetUser(w http.ResponseWriter, r *http.Request) {
+func (_mock *UserController) GetUserWithID(w http.ResponseWriter, r *http.Request) {
 	_mock.Called(w, r)
 	return
 }
 
-// UserController_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUser'
+// UserController_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserWithID'
 type UserController_GetUser_Call struct {
 	*mock.Call
 }
@@ -98,7 +98,7 @@ type UserController_GetUser_Call struct {
 //   - w http.ResponseWriter
 //   - r *http.Request
 func (_e *UserController_Expecter) GetUser(w interface{}, r interface{}) *UserController_GetUser_Call {
-	return &UserController_GetUser_Call{Call: _e.mock.On("GetUser", w, r)}
+	return &UserController_GetUser_Call{Call: _e.mock.On("GetUserWithID", w, r)}
 }
 
 func (_c *UserController_GetUser_Call) Run(run func(w http.ResponseWriter, r *http.Request)) *UserController_GetUser_Call {

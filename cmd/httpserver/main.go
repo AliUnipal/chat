@@ -45,6 +45,7 @@ type chatController interface {
 
 type userController interface {
 	CreateUser(w http.ResponseWriter, r *http.Request)
+	GetUserWithID(w http.ResponseWriter, r *http.Request)
 	GetUser(w http.ResponseWriter, r *http.Request)
 	Login(w http.ResponseWriter, r *http.Request)
 }
@@ -68,6 +69,7 @@ func (ca *contextAccessor) CurrentUserID(ctx context.Context) (uuid.UUID, bool) 
 
 type server struct {
 	srv               *http.Server
+	mux               *http.ServeMux
 	sess              jwtManager
 	chatController    chatController
 	userController    userController
@@ -120,9 +122,15 @@ func NewServer(
 		panic("Message ws manager cannot be nil")
 	}
 
+	mux := http.NewServeMux()
+	handler := With(
+		mux,
+		corsMiddleware,
+	)
+
 	srv := &http.Server{
 		Addr:    fmt.Sprintf(":%d", port),
-		Handler: http.NewServeMux(),
+		Handler: handler,
 		BaseContext: func(net.Listener) context.Context {
 			return context.WithValue(ctx, srvCtxKey, "chatServer")
 		},
@@ -130,6 +138,7 @@ func NewServer(
 
 	s := &server{
 		srv,
+		mux,
 		sess,
 		chatController,
 		userController,
@@ -138,6 +147,40 @@ func NewServer(
 	}
 	s.registerHandlers()
 	return s
+}
+
+func corsMiddleware(next http.Handler) http.Handler {
+	allowed := map[string]bool{
+		"http://localhost:3000": true,
+		"http://127.0.0.1:3000": true,
+	}
+
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+
+		if origin != "" && allowed[origin] {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Vary", "Origin")
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, PATCH, DELETE, OPTIONS")
+			w.Header().Add("Vary", "Access-Control-Request-Method")
+
+			// Echo requested headers (most reliable)
+			if reqHeaders := r.Header.Get("Access-Control-Request-Headers"); reqHeaders != "" {
+				w.Header().Set("Access-Control-Allow-Headers", reqHeaders)
+				w.Header().Add("Vary", "Access-Control-Request-Headers")
+			} else {
+				w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Authorization")
+			}
+		}
+
+		if r.Method == http.MethodOptions {
+			w.WriteHeader(http.StatusNoContent)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *server) authMiddleware(next http.Handler) http.Handler {
@@ -164,23 +207,25 @@ func (s *server) authMiddleware(next http.Handler) http.Handler {
 }
 
 func (s *server) registerHandlers() {
-	mux, ok := s.srv.Handler.(*http.ServeMux)
-	if !ok {
-		panic("Handler is not of type *http.ServeMux")
-	}
+	//mux, ok := s.srv.Handler.(*http.ServeMux)
+	//if !ok {
+	//	panic("Handler is not of type *http.ServeMux")
+	//}
+	mux := s.mux
 
 	mux.HandleFunc("POST /chats", s.authenticated(s.chatController.CreateChat))
 	mux.HandleFunc("GET /chats", s.authenticated(s.chatController.GetChats))
 
 	mux.HandleFunc("POST /users", s.userController.CreateUser)
-	mux.HandleFunc("GET /users/{id}", s.authenticated(s.userController.GetUser))
+	mux.HandleFunc("GET /users/{id}", s.authenticated(s.userController.GetUserWithID))
+	mux.HandleFunc("GET /identity", s.authenticated(s.userController.GetUser))
 	mux.HandleFunc("POST /login", s.userController.Login)
 
 	mux.HandleFunc("POST /chats/{id}/messages", s.authenticated(s.messageController.CreateMessage))
 	mux.HandleFunc("GET /chats/{id}/messages", s.authenticated(s.messageController.GetMessages))
 
 	// NOTE: Might not be the correct place but whatever!!!
-	mux.HandleFunc("GET /ws/chats/{id}", s.messageWsManager.ServeWS)
+	mux.HandleFunc("GET /ws/chats/{id}", s.authenticated(s.messageWsManager.ServeWS))
 
 	mux.HandleFunc("/ping", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -195,6 +240,7 @@ func (s *server) registerHandlers() {
 
 func (s *server) Start() error {
 	slog.Info("Starting server", "address", s.srv.Addr)
+	//if err := s.srv.ListenAndServeTLS("cert/localhost+2.pem", "cert/localhost+2-key.pem"); err != nil && err != http.ErrServerClosed {
 	if err := s.srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		slog.Error("Failed to start server", "error", err)
 		return fmt.Errorf("failed to start server: %w", err)
@@ -238,11 +284,11 @@ func main() {
 	chatController := chatcontroller.New(chatSvc, &contextAccessor{})
 
 	userSvc := bs.NewUserService(ctx)
-	userController := usercontroller.New(userSvc)
+	userController := usercontroller.New(userSvc, &contextAccessor{})
 
 	msgSvc := bs.NewMessageService(ctx)
 	msgController := messagecontroller.New(msgSvc)
-	msgWsManager := messagemanager.New(msgSvc)
+	msgWsManager := messagemanager.New(msgSvc, &contextAccessor{})
 
 	srv := NewServer(
 		ctx, 8080,

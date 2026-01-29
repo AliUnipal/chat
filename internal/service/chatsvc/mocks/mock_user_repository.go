@@ -44,7 +44,7 @@ func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (userrep
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetUser")
+		panic("no return value specified for GetUserWithID")
 	}
 
 	var r0 userrepos.CreateUserInput
@@ -65,7 +65,7 @@ func (_mock *UserRepository) GetUser(ctx context.Context, id uuid.UUID) (userrep
 	return r0, r1
 }
 
-// UserRepository_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUser'
+// UserRepository_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserWithID'
 type UserRepository_GetUser_Call struct {
 	*mock.Call
 }
@@ -74,7 +74,7 @@ type UserRepository_GetUser_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 func (_e *UserRepository_Expecter) GetUser(ctx interface{}, id interface{}) *UserRepository_GetUser_Call {
-	return &UserRepository_GetUser_Call{Call: _e.mock.On("GetUser", ctx, id)}
+	return &UserRepository_GetUser_Call{Call: _e.mock.On("GetUserWithID", ctx, id)}
 }
 
 func (_c *UserRepository_GetUser_Call) Run(run func(ctx context.Context, id uuid.UUID)) *UserRepository_GetUser_Call {

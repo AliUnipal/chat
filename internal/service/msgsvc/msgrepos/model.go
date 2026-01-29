@@ -1,9 +1,10 @@
 package msgrepos
 
 import (
+	"time"
+
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/google/uuid"
-	"time"
 )
 
 type User struct {
@@ -20,7 +21,7 @@ type Message struct {
 	ChatID      uuid.UUID           `json:"chat_id"`
 	Content     []byte              `json:"content"`
 	ContentType message.ContentType `json:"content_type"`
-	Timestamp   time.Time           `json:"timestamp"`
+	CreatedAt   time.Time           `json:"created_at"`
 }
 
 type CreateMessageInput struct {

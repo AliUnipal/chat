@@ -185,7 +185,7 @@ func (_mock *UserService) GetUser(ctx context.Context, id uuid.UUID) (user.User,
 	ret := _mock.Called(ctx, id)
 
 	if len(ret) == 0 {
-		panic("no return value specified for GetUser")
+		panic("no return value specified for GetUserWithID")
 	}
 
 	var r0 user.User
@@ -206,7 +206,7 @@ func (_mock *UserService) GetUser(ctx context.Context, id uuid.UUID) (user.User,
 	return r0, r1
 }
 
-// UserService_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUser'
+// UserService_GetUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserWithID'
 type UserService_GetUser_Call struct {
 	*mock.Call
 }
@@ -215,7 +215,7 @@ type UserService_GetUser_Call struct {
 //   - ctx context.Context
 //   - id uuid.UUID
 func (_e *UserService_Expecter) GetUser(ctx interface{}, id interface{}) *UserService_GetUser_Call {
-	return &UserService_GetUser_Call{Call: _e.mock.On("GetUser", ctx, id)}
+	return &UserService_GetUser_Call{Call: _e.mock.On("GetUserWithID", ctx, id)}
 }
 
 func (_c *UserService_GetUser_Call) Run(run func(ctx context.Context, id uuid.UUID)) *UserService_GetUser_Call {
