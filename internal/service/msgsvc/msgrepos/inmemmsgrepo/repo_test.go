@@ -3,14 +3,15 @@ package inmemmsgrepo_test
 import (
 	"context"
 	"errors"
+	"reflect"
+	"testing"
+	"time"
+
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos/inmemmsgrepo"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos/inmemmsgrepo/mocks"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
-	"reflect"
-	"testing"
-	"time"
 )
 
 func Test_CreateMessageReturnSuccess(t *testing.T) {
@@ -106,7 +107,7 @@ func Test_GetMessagesReturnMsgs(t *testing.T) {
 			ChatID:      chatID,
 			Content:     []byte("test 1"),
 			ContentType: 0,
-			Timestamp:   time.Now().Add(time.Minute * 100),
+			CreatedAt:   time.Now().Add(time.Minute * 100),
 		},
 		msgrepos.Message{
 			ID:          uuid.New(),
@@ -114,7 +115,7 @@ func Test_GetMessagesReturnMsgs(t *testing.T) {
 			ChatID:      chatID,
 			Content:     []byte("test 2"),
 			ContentType: 0,
-			Timestamp:   time.Now().Add(time.Minute * 200),
+			CreatedAt:   time.Now().Add(time.Minute * 200),
 		},
 		msgrepos.Message{
 			ID:          uuid.New(),
@@ -122,7 +123,7 @@ func Test_GetMessagesReturnMsgs(t *testing.T) {
 			ChatID:      chatID,
 			Content:     []byte("test 3"),
 			ContentType: 0,
-			Timestamp:   time.Now().Add(time.Minute * 300),
+			CreatedAt:   time.Now().Add(time.Minute * 300),
 		},
 	}
 

@@ -49,7 +49,7 @@ func (r *repo) CreateMessage(ctx context.Context, in msgrepos.CreateMessageInput
 
 func (r *repo) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Message, error) {
 	dbMsgs, err := r.q.GetMessages(ctx, chatID)
-	if err == sql.ErrConnDone {
+	if err == sql.ErrNoRows {
 		return nil, msgrepos.ErrNotFound
 	}
 	if err != nil {
@@ -59,10 +59,11 @@ func (r *repo) GetMessages(ctx context.Context, chatID uuid.UUID) ([]msgrepos.Me
 	var msgs []msgrepos.Message
 	for _, m := range dbMsgs {
 		msgs = append(msgs, msgrepos.Message{
-			ID:       m.ID,
-			SenderID: m.SenderID,
-			ChatID:   m.ChatID,
-			Content:  m.Content,
+			ID:        m.ID,
+			SenderID:  m.SenderID,
+			ChatID:    m.ChatID,
+			Content:   m.Content,
+			CreatedAt: m.CreatedAt,
 		})
 	}
 

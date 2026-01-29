@@ -25,4 +25,5 @@ type User struct {
 	LastName  sql.NullString `db:"last_name"`
 	Username  string         `db:"username"`
 	CreatedAt time.Time      `db:"created_at"`
+	Password  []byte         `db:"password"`
 }

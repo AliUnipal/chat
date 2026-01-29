@@ -118,7 +118,7 @@ func TestCreateChat_ReturnErrorOnEmptyUserOne(t *testing.T) {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == uuid.Nil &&
 			c.OtherUserID == otherUserID
-	})).Return(errors.New("User one ID missing."))
+	})).Return(errors.New("User one UserID missing."))
 
 	service := chatsvc.NewService(chatMockRepo)
 
@@ -136,7 +136,7 @@ func TestCreateChat_ReturnErrorOnEmptyUserTwo(t *testing.T) {
 		return c.ID != uuid.Nil &&
 			c.CurrentUserID == currentUserID &&
 			c.OtherUserID == uuid.Nil
-	})).Return(errors.New("User one ID missing."))
+	})).Return(errors.New("User one UserID missing."))
 
 	service := chatsvc.NewService(chatMockRepo)
 

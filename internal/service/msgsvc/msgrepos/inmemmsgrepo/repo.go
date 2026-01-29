@@ -3,6 +3,7 @@ package inmemmsgrepo
 import (
 	"context"
 	"errors"
+
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
 )
@@ -51,7 +52,7 @@ func (r *repository) CreateMessage(ctx context.Context, in msgrepos.CreateMessag
 		ChatID:      in.ChatID,
 		Content:     in.Content,
 		ContentType: in.ContentType,
-		Timestamp:   in.Timestamp,
+		CreatedAt:   in.Timestamp,
 	})
 
 	return nil

@@ -3,10 +3,11 @@ package msgsvc
 import (
 	"context"
 	"errors"
+	"time"
+
 	"github.com/AliUnipal/chat/internal/models/message"
 	"github.com/AliUnipal/chat/internal/service/msgsvc/msgrepos"
 	"github.com/google/uuid"
-	"time"
 )
 
 type MessageInput struct {
@@ -18,7 +19,7 @@ type MessageInput struct {
 
 // TODO: Ask about how the middleware/authorization for creating and getting message. And if it change the structure of the methods
 type messageService interface {
-	CreateMessage(ctx context.Context, in MessageInput) (uuid.UUID, error)
+	CreateMessage(ctx context.Context, in MessageInput) (message.Message, error)
 	GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error)
 }
 
@@ -37,31 +38,39 @@ func NewService(repo messageRepository) *service {
 	return &service{repo: repo}
 }
 
-func (s *service) CreateMessage(ctx context.Context, in MessageInput) (uuid.UUID, error) {
+func (s *service) CreateMessage(ctx context.Context, in MessageInput) (message.Message, error) {
 	if in.Content == nil || len(in.Content) == 0 {
-		return uuid.Nil, errors.New("content is empty")
+		return message.Message{}, errors.New("content is empty")
 	}
 	if in.ChatID == uuid.Nil {
-		return uuid.Nil, errors.New("chatID is empty")
+		return message.Message{}, errors.New("chatID is empty")
 	}
 	if in.SenderID == uuid.Nil {
-		return uuid.Nil, errors.New("senderID is empty")
+		return message.Message{}, errors.New("senderID is empty")
 	}
 
 	id := uuid.New()
-
-	if err := s.repo.CreateMessage(ctx, msgrepos.CreateMessageInput{
+	msg := message.Message{
 		ID:          id,
 		SenderID:    in.SenderID,
 		ChatID:      in.ChatID,
 		Content:     in.Content,
 		ContentType: in.ContentType,
 		Timestamp:   time.Now(),
-	}); err != nil {
-		return uuid.Nil, err
 	}
 
-	return id, nil
+	if err := s.repo.CreateMessage(ctx, msgrepos.CreateMessageInput{
+		ID:          msg.ID,
+		SenderID:    msg.SenderID,
+		ChatID:      msg.ChatID,
+		Content:     msg.Content,
+		ContentType: msg.ContentType,
+		Timestamp:   msg.Timestamp,
+	}); err != nil {
+		return message.Message{}, err
+	}
+
+	return msg, nil
 }
 
 func (s *service) GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.Message, error) {
@@ -77,7 +86,7 @@ func (s *service) GetMessages(ctx context.Context, chatID uuid.UUID) ([]message.
 			ChatID:      m.ChatID,
 			Content:     m.Content,
 			ContentType: m.ContentType,
-			Timestamp:   m.Timestamp,
+			Timestamp:   m.CreatedAt,
 		}
 	}
 

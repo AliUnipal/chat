@@ -6,7 +6,6 @@
 -- chatsvc\chatrepos\pqchatrepo\repo.go:12: running "sqlc": exit status 1
 
 -- +goose Up
-
 CREATE TABLE chats
 (
     id           UUID PRIMARY KEY,
